@@ -1,0 +1,404 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:CALC-{MM}-{#####}",
+ "creation": "2025-12-08 17:40:27.722893",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "cliente_section",
+  "nome",
+  "produto_section",
+  "item",
+  "descri\u00e7\u00e3o",
+  "quantidade",
+  "custo_base",
+  "imposto_section",
+  "tax_rate",
+  "fotolito_section",
+  "fotolito_value",
+  "gravacao_1",
+  "unit_qtd_grav_1",
+  "unit_cost_grav_1",
+  "column_break_zuap",
+  "total_grav_1",
+  "grava\u00e7\u00e3o_2_section",
+  "unit_qtd_grav_2",
+  "unit_cost_grav_2",
+  "column_break_xtmb",
+  "total_grav_2",
+  "tabela_comiss\u00e3o_section",
+  "comis_per",
+  "comis_0",
+  "custom_commission",
+  "comis_custom",
+  "margin",
+  "embalagens_section",
+  "qtd_p",
+  "qtd_m",
+  "qtd_g",
+  "qtd_xg",
+  "qtd_xxg",
+  "embal_custom",
+  "qtd_customizada",
+  "valor_customizada",
+  "custo_total_embalagens",
+  "outras_despesas_section",
+  "mao_de_obra",
+  "gasoline",
+  "motoboy",
+  "frete",
+  "extras",
+  "total_despesas",
+  "bv_section",
+  "porcentagem",
+  "resultados_section",
+  "valor_final_unitario",
+  "valor_final_total",
+  "comissao_receber",
+  "total_bv",
+  "total_tax"
+ ],
+ "fields": [
+  {
+   "fieldname": "cliente_section",
+   "fieldtype": "Section Break",
+   "label": "Cliente"
+  },
+  {
+   "fieldname": "nome",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Nome",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "produto_section",
+   "fieldtype": "Section Break",
+   "label": "Produto"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "descri\u00e7\u00e3o",
+   "fieldtype": "Data",
+   "label": "Descri\u00e7\u00e3o",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "quantidade",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Quantidade",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "custo_base",
+   "fieldtype": "Currency",
+   "label": "Custo Base",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fotolito_section",
+   "fieldtype": "Section Break",
+   "label": "Fotolito"
+  },
+  {
+   "fieldname": "fotolito_value",
+   "fieldtype": "Select",
+   "options": "N/A\n20\n30"
+  },
+  {
+   "fieldname": "gravacao_1",
+   "fieldtype": "Section Break",
+   "label": "Grava\u00e7\u00e3o 1"
+  },
+  {
+   "fieldname": "unit_qtd_grav_1",
+   "fieldtype": "Select",
+   "label": "Unidade",
+   "options": "Unit\u00e1rio\nMilheiro"
+  },
+  {
+   "default": "0",
+   "fieldname": "unit_cost_grav_1",
+   "fieldtype": "Currency",
+   "label": "Custo Unit\u00e1rio",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "column_break_zuap",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_grav_1",
+   "fieldtype": "Currency",
+   "label": "Total Grava\u00e7\u00e3o",
+   "read_only": 1
+  },
+  {
+   "fieldname": "grava\u00e7\u00e3o_2_section",
+   "fieldtype": "Section Break",
+   "label": "Grava\u00e7\u00e3o 2"
+  },
+  {
+   "fieldname": "unit_qtd_grav_2",
+   "fieldtype": "Select",
+   "label": "Unidade ",
+   "options": "Unit\u00e1rio\nMilheiro"
+  },
+  {
+   "default": "0",
+   "fieldname": "unit_cost_grav_2",
+   "fieldtype": "Currency",
+   "label": "Custo Unit\u00e1rio",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "column_break_xtmb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_grav_2",
+   "fieldtype": "Currency",
+   "label": "Total Grava\u00e7\u00e3o ",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tabela_comiss\u00e3o_section",
+   "fieldtype": "Section Break",
+   "label": "Tabela Comiss\u00e3o"
+  },
+  {
+   "fieldname": "embalagens_section",
+   "fieldtype": "Section Break",
+   "label": "Embalagens"
+  },
+  {
+   "default": "0",
+   "fieldname": "qtd_p",
+   "fieldtype": "Int",
+   "label": "Qtd P"
+  },
+  {
+   "default": "0",
+   "fieldname": "qtd_m",
+   "fieldtype": "Int",
+   "label": "Qtd M"
+  },
+  {
+   "default": "0",
+   "fieldname": "qtd_g",
+   "fieldtype": "Int",
+   "label": "Qtd G"
+  },
+  {
+   "default": "0",
+   "fieldname": "qtd_xg",
+   "fieldtype": "Int",
+   "label": "Qtd XG"
+  },
+  {
+   "default": "0",
+   "fieldname": "qtd_xxg",
+   "fieldtype": "Int",
+   "label": "Qtd XXG"
+  },
+  {
+   "default": "0",
+   "fieldname": "custo_total_embalagens",
+   "fieldtype": "Currency",
+   "label": "Custo Total Embalagens",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resultados_section",
+   "fieldtype": "Section Break",
+   "label": "Resultados"
+  },
+  {
+   "default": "0",
+   "fieldname": "valor_final_total",
+   "fieldtype": "Currency",
+   "label": "Valor Final Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "comis_per",
+   "fieldtype": "Select",
+   "label": "Tabela",
+   "options": "10\n9\n8\n7\n6\n5\n4\n3\n2\n1\nCustomizada"
+  },
+  {
+   "default": "0",
+   "fieldname": "comis_0",
+   "fieldtype": "Check",
+   "label": "N\u00e3o aplicar comiss\u00e3o"
+  },
+  {
+   "depends_on": "eval:doc.custom_commission == 1;\n",
+   "fieldname": "comis_custom",
+   "fieldtype": "Float",
+   "label": "Comiss\u00e3o Customizada"
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_commission",
+   "fieldtype": "Check",
+   "label": "Comiss\u00e3o Customizada"
+  },
+  {
+   "default": "0",
+   "fieldname": "embal_custom",
+   "fieldtype": "Check",
+   "label": "Customizada"
+  },
+  {
+   "depends_on": "eval:doc.embal_custom == 1;\n",
+   "fieldname": "qtd_customizada",
+   "fieldtype": "Int",
+   "label": "Qtd Customizada"
+  },
+  {
+   "depends_on": "eval:doc.embal_custom == 1;\n",
+   "fieldname": "valor_customizada",
+   "fieldtype": "Currency",
+   "label": "Valor Customizada"
+  },
+  {
+   "fieldname": "outras_despesas_section",
+   "fieldtype": "Section Break",
+   "label": "Outras Despesas"
+  },
+  {
+   "fieldname": "mao_de_obra",
+   "fieldtype": "Currency",
+   "label": "M\u00e3o-de-obra"
+  },
+  {
+   "fieldname": "gasoline",
+   "fieldtype": "Currency",
+   "label": "Combust\u00edvel"
+  },
+  {
+   "fieldname": "motoboy",
+   "fieldtype": "Currency",
+   "label": "Motoboy"
+  },
+  {
+   "fieldname": "frete",
+   "fieldtype": "Currency",
+   "label": "Frete"
+  },
+  {
+   "fieldname": "extras",
+   "fieldtype": "Currency",
+   "label": "Extras"
+  },
+  {
+   "fieldname": "total_despesas",
+   "fieldtype": "Currency",
+   "label": "Total Despesas",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bv_section",
+   "fieldtype": "Section Break",
+   "label": "BV"
+  },
+  {
+   "fieldname": "porcentagem",
+   "fieldtype": "Percent",
+   "label": "Porcentagem"
+  },
+  {
+   "fieldname": "margin",
+   "fieldtype": "Float",
+   "label": "Margem",
+   "non_negative": 1,
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "valor_final_unitario",
+   "fieldtype": "Currency",
+   "label": "Valor Final Unit\u00e1rio",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "comissao_receber",
+   "fieldtype": "Currency",
+   "label": "Comiss\u00e3o a Receber",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_bv",
+   "fieldtype": "Currency",
+   "label": "Total BV",
+   "read_only": 1
+  },
+  {
+   "fieldname": "imposto_section",
+   "fieldtype": "Section Break",
+   "label": "Imposto"
+  },
+  {
+   "default": "5",
+   "description": "Porcentagem de imposto (Ex: 5.00)",
+   "fieldname": "tax_rate",
+   "fieldtype": "Float",
+   "label": "Al\u00edquota",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "total_tax",
+   "fieldtype": "Currency",
+   "label": "Total Imposto",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 0,
+ "links": [],
+ "modified": "2025-12-09 01:01:18.285878",
+ "modified_by": "Administrator",
+ "module": "Calculadora Orcamento",
+ "name": "Calculadora Orcamento",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "track_views": 1
+}

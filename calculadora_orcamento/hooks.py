@@ -1,10 +1,12 @@
+from erpnext.hooks import app_logo_url
+
 app_name = "calculadora_orcamento"
 app_title = "Calculadora Orcamento"
 app_publisher = "Strategitech"
 app_description = "Calculadora de custos totais para orcamento"
 app_email = "joaolucasmoura@strategitech.tech"
 app_license = "mit"
-
+app_logo_url = "/assets/calculadora_orcamento/QI_logo.png"  # noqa: F811
 # Apps
 # ------------------
 
