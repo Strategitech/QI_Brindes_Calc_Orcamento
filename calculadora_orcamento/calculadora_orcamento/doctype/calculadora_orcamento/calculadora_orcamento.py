@@ -164,3 +164,24 @@ class CalculadoraOrcamento(Document):
         self.valor_final_unitario = valor_unitario
 
 
+@frappe.whitelist()
+def make_delivery_note(source_name):
+    doc = frappe.get_doc("Calculadora Orcamento", source_name)
+
+    company = frappe.defaults.get_defaults().get("company")
+    warehouse = frappe.db.get_single_value("Stock Settings", "default_warehouse")
+
+    dn = frappe.new_doc("Delivery Note")
+    dn.customer = doc.nome
+    dn.company = company
+    dn.append("items", {
+        "item_code": doc.item,
+        "qty": doc.quantidade,
+        "rate": doc.valor_final_unitario,
+        "warehouse": warehouse,
+    })
+    dn.insert()
+
+    return dn.name
+
+
