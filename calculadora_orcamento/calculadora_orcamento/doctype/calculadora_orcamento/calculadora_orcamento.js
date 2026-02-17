@@ -18,6 +18,21 @@ frappe.ui.form.on("Calculadora Orcamento", {
 					},
 				});
 			}).addClass("btn-primary");
+
+			frm.add_custom_button(__("Gerar Confirmacao de Pedido"), function () {
+				frappe.call({
+					method:
+						"calculadora_orcamento.calculadora_orcamento.doctype.calculadora_orcamento.calculadora_orcamento.make_confirmacao_pedido",
+					args: { source_name: frm.doc.name },
+					freeze: true,
+					freeze_message: __("Criando Confirmação de Pedido..."),
+					callback: function (r) {
+						if (r.message) {
+							frappe.set_route("Form", "Confirmacao Pedido", r.message);
+						}
+					},
+				});
+			});
 		}
 
 		if (!frm.is_new()) {
@@ -83,5 +98,64 @@ frappe.ui.form.on("Calculadora Orcamento", {
 				});
 			});
 		}
+	},
+
+	tabela_comissao(frm) {
+		if (frm.doc.tabela_comissao) {
+			frappe.db.get_doc("Tabela Comissao", frm.doc.tabela_comissao).then((doc) => {
+				frm.set_value("margin", doc.margem_lucro);
+				if (!frm.doc.custom_commission) {
+					frm.set_value("comis_custom", doc.comissao);
+				}
+			});
+		}
+	},
+
+	quantidade(frm) {
+		// Refresh all gravacao child rows when quantity changes
+		if (frm.doc.gravacoes && frm.doc.gravacoes.length > 0) {
+			frm.doc.gravacoes.forEach(function (row) {
+				if (row.catalogo_gravacao) {
+					frappe.call({
+						method:
+							"calculadora_orcamento.calculadora_orcamento.doctype.catalogo_gravacao.catalogo_gravacao.get_custo_gravacao",
+						args: { catalogo_name: row.catalogo_gravacao, qty: frm.doc.quantidade || 0 },
+						callback: function (r) {
+							if (r.message) {
+								frappe.model.set_value(row.doctype, row.name, "descricao", r.message.descricao);
+							}
+						},
+					});
+				}
+			});
+		}
+	},
+});
+
+frappe.ui.form.on("Gravacao Item", {
+	catalogo_gravacao(frm, cdt, cdn) {
+		var row = locals[cdt][cdn];
+		var qty = frm.doc.quantidade || 0;
+
+		if (!row.catalogo_gravacao) {
+			frappe.model.set_value(cdt, cdn, "descricao", "");
+			return;
+		}
+
+		if (qty <= 0) {
+			frappe.model.set_value(cdt, cdn, "descricao", "Informe a quantidade");
+			return;
+		}
+
+		frappe.call({
+			method:
+				"calculadora_orcamento.calculadora_orcamento.doctype.catalogo_gravacao.catalogo_gravacao.get_custo_gravacao",
+			args: { catalogo_name: row.catalogo_gravacao, qty: qty },
+			callback: function (r) {
+				if (r.message) {
+					frappe.model.set_value(cdt, cdn, "descricao", r.message.descricao);
+				}
+			},
+		});
 	},
 });

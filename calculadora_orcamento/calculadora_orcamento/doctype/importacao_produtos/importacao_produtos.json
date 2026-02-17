@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "autoname": "format:IMP-{#####}",
+ "creation": "2026-02-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "arquivo",
+  "supplier",
+  "column_break_imp",
+  "status",
+  "total_importados",
+  "total_erros",
+  "log_section",
+  "log"
+ ],
+ "fields": [
+  {
+   "fieldname": "arquivo",
+   "fieldtype": "Attach",
+   "label": "Arquivo (CSV/XLSX)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Select",
+   "label": "Fornecedor",
+   "options": "\nstricker\nasia_import\nso_marcas\nxbz_import\noutro",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_imp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Pendente",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Pendente\nProcessando\nConcluido\nErro",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_importados",
+   "fieldtype": "Int",
+   "label": "Total Importados",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_erros",
+   "fieldtype": "Int",
+   "label": "Total Erros",
+   "read_only": 1
+  },
+  {
+   "fieldname": "log_section",
+   "fieldtype": "Section Break",
+   "label": "Log"
+  },
+  {
+   "fieldname": "log",
+   "fieldtype": "Long Text",
+   "label": "Log",
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-02-17 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Calculadora Orcamento",
+ "name": "Importacao Produtos",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

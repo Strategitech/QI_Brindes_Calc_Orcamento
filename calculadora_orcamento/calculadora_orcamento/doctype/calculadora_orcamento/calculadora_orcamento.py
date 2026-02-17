@@ -1,10 +1,32 @@
 # Copyright (c) 2025, Strategitech and contributors
 # For license information, please see license.txt
 
+import json
 import math
 
 import frappe
 from frappe.model.document import Document
+
+
+def get_scale_price(item_code, qty):
+    """Get price from scale_prices JSON if available, else fall back to Item Price."""
+    scale_json = frappe.db.get_value("Item", item_code, "scale_prices")
+    if scale_json:
+        try:
+            tiers = json.loads(scale_json)
+            if isinstance(tiers, list) and tiers:
+                # Sort by MinQt descending, pick first where qty >= MinQt
+                tiers_sorted = sorted(tiers, key=lambda t: t.get("MinQt", 0), reverse=True)
+                for tier in tiers_sorted:
+                    if qty >= tier.get("MinQt", 0):
+                        return tier.get("Price", 0.0)
+        except (json.JSONDecodeError, TypeError, KeyError):
+            pass
+
+    # Fallback to flat Item Price
+    filters = {"item_code": item_code, "selling": 1}
+    rate = frappe.db.get_value("Item Price", filters, "price_list_rate")
+    return rate if rate else 0.0
 
 
 class CalculadoraOrcamento(Document):
@@ -12,26 +34,21 @@ class CalculadoraOrcamento(Document):
         self.calculate_all()
 
     def calculate_all(self):
-        # 1. Base Product Cost
+        # 1. Base Product Cost (scale prices with Item Price fallback)
         self.custo_base = 0.0
         if self.item:
-            # Fetch from 'Item Price' DocType where Item Code matches
-            # You might need to specify the price list (e.g., 'Standard Selling' or 'Standard Buying')
-            # I will assume 'Standard Selling' as a default, or just grab the first one found.
-
-            filters = {"item_code": self.item, "selling": 1} # Get any selling price
-
-            # If you have a specific list, use: filters = {"item_code": self.item, "price_list": "Standard Selling"}
-
-            rate = frappe.db.get_value("Item Price", filters, "price_list_rate")
-            self.custo_base = rate if rate else 0.0
-
+            self.custo_base = get_scale_price(self.item, self.quantidade or 0)
 
         main_qty = self.quantidade or 0
         base_cost_total = (main_qty * (self.custo_base or 0.0))
 
+        # 1b. Aliquota on Base Cost (VBA: dAliquotaCalculada)
+        aliquota_on_base = 0.0
+        if self.aplicar_aliquota:
+            aliquota_on_base = base_cost_total * ((self.tax_rate or 0.0) / 100.0)
+        self.aliquota_calculada = aliquota_on_base
+
         # 2. Fotolito Logic
-        # Field is Select: "N/A", "20", "30". Need to parse string to float.
         fotolito_cost = 0.0
         if self.fotolito_value and self.fotolito_value != "N/A":
             try:
@@ -39,44 +56,41 @@ class CalculadoraOrcamento(Document):
             except ValueError:
                 fotolito_cost = 0.0
 
-        # 3. Gravacao 1 Logic
-        # Logic: If Milheiro -> ceil(qty/1000) * cost. If Unitario -> qty * cost.
-        cost_grav_1 = 0.0
-        unit_cost_1 = self.unit_cost_grav_1 or 0.0
+        # 3. Gravacoes (Child Table) — iterate over all engraving rows
+        from calculadora_orcamento.calculadora_orcamento.doctype.catalogo_gravacao.catalogo_gravacao import calcular_custo_gravacao
 
-        if self.unit_qtd_grav_1 == "Milheiro":
-            milheiros = math.ceil(main_qty / 1000.0)
-            cost_grav_1 = milheiros * unit_cost_1
-        else: # "Unitário" or None
-            cost_grav_1 = main_qty * unit_cost_1
+        total_grav_cost = 0.0
+        for row in self.gravacoes:
+            if row.catalogo_gravacao:
+                result = calcular_custo_gravacao(row.catalogo_gravacao, main_qty)
+                row.total = result["custo"]
+                row.descricao = result["descricao"]
+            else:
+                unit_cost = row.custo_unitario or 0.0
+                if row.unidade == "Milheiro":
+                    milheiros = math.ceil(main_qty / 1000.0)
+                    row.total = milheiros * unit_cost
+                else:
+                    row.total = main_qty * unit_cost
+                row.descricao = ""
 
-        self.total_grav_1 = cost_grav_1
+            total_grav_cost += row.total
 
-        # 4. Gravacao 2 Logic (Same logic)
-        cost_grav_2 = 0.0
-        unit_cost_2 = self.unit_cost_grav_2 or 0.0
+        self.total_gravacao = total_grav_cost
 
-        if self.unit_qtd_grav_2 == "Milheiro":
-            milheiros = math.ceil(main_qty / 1000.0)
-            cost_grav_2 = milheiros * unit_cost_2
-        else:
-            cost_grav_2 = main_qty * unit_cost_2
-
-        self.total_grav_2 = cost_grav_2
-
-        total_grav_cost = cost_grav_1 + cost_grav_2
-
-        # 5. Embalagens (Packaging)
-        # Assuming P/M/G/XG/XXG have a fixed cost per unit?
-        # Your JSON doesn't have a "Cost per Packaging Unit" field.
-        # I will assume R$ 0.00 for now unless you hardcode it or add a field.
-        # Let's say cost is 0 since it's not in the JSON.
-        pack_qty_standard = (self.qtd_p or 0) + (self.qtd_m or 0) + (self.qtd_g or 0) + (self.qtd_xg or 0) + (self.qtd_xxg or 0)
-        cost_standard_pack = pack_qty_standard * 0.0 # TODO: Add a field for this cost or hardcode it
+        # 5. Embalagens (Packaging) — read per-size costs from Embalagem Config
+        embal_config = frappe.get_cached_doc("Embalagem Config")
+        cost_standard_pack = (
+            (self.qtd_p or 0) * (embal_config.custo_p or 0) +
+            (self.qtd_m or 0) * (embal_config.custo_m or 0) +
+            (self.qtd_g or 0) * (embal_config.custo_g or 0) +
+            (self.qtd_xg or 0) * (embal_config.custo_xg or 0) +
+            (self.qtd_xxg or 0) * (embal_config.custo_xxg or 0)
+        )
 
         # Custom Packaging
         cost_custom_pack = 0.0
-        if self.embal_custom: # Checkbox is checked
+        if self.embal_custom:
             cost_custom_pack = (self.qtd_customizada or 0) * (self.valor_customizada or 0)
 
         total_embal_cost = cost_standard_pack + cost_custom_pack
@@ -90,55 +104,49 @@ class CalculadoraOrcamento(Document):
                          (self.extras or 0)
         self.total_despesas = total_despesas
 
-        # 7. Calculate Commission Rate (Sales Rep)
-        # Determine the percentage based on the radio/select logic
-
-        comissao_percent = 0.0
-
-        if self.comis_0: # "Não aplicar comissão" checked
+        # 7. Tabela Comissao — auto-fill margin and commission from linked doc
+        if self.tabela_comissao:
+            tabela = frappe.get_cached_doc("Tabela Comissao", self.tabela_comissao)
+            self.margin = tabela.margem_lucro
+            if not self.custom_commission:
+                comissao_percent = tabela.comissao
+            else:
+                comissao_percent = self.comis_custom or 0.0
+        else:
             comissao_percent = 0.0
-        elif self.custom_commission: # "Comissão Customizada" checked
-            comissao_percent = self.comis_custom or 0.0
-        elif self.comis_per and self.comis_per != "Customizada":
-            # Field options are "10", "9", etc. Parse string.
-            try:
-                comissao_percent = float(self.comis_per)
-            except ValueError:
-                comissao_percent = 0.0
+
+        # Commission overrides
+        if self.comis_0:
+            comissao_percent = 0.0
+        elif not self.tabela_comissao:
+            if self.custom_commission:
+                comissao_percent = self.comis_custom or 0.0
 
         if "System Manager" in frappe.get_roles(frappe.session.user):
-            # Bypass limit check entirely
             pass
         else:
             # Sales Person Limit Logic
             sales_person_limit = 0.0
-
-            # 1. Find Employee & Sales Person
             employee = frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
             if employee:
                 sales_person = frappe.db.get_value("Sales Person", {"employee": employee}, ["name", "custom_max_commission_percent"], as_dict=True)
                 if sales_person:
                     sales_person_limit = sales_person.custom_max_commission_percent
 
-            # 2. Validation
-            # Only validate if a limit is set (>0) AND user is exceeding it
             if sales_person_limit > 0 and comissao_percent > sales_person_limit:
                  frappe.throw(f"Limite de comissão excedido! Seu limite é {sales_person_limit}%.")
 
-        # 8. Total Hard Cost
-        # Sum everything up
-        total_hard_cost = base_cost_total + fotolito_cost + total_grav_cost + total_embal_cost + total_despesas
+        # 8. Total Hard Cost (includes aliquota on base)
+        total_hard_cost = base_cost_total + aliquota_on_base + fotolito_cost + total_grav_cost + total_embal_cost + total_despesas
 
         # 9. Target Revenue (Cost + Margin)
-        # Margin is a markup on cost. E.g. Cost 100 + Margin 50% = 150 Target
         margin_rate = (self.margin or 0.0) / 100.0
         target_revenue = total_hard_cost * (1.0 + margin_rate)
 
-        # 10. Gross Up (Add BV + Commission on top of Sale Price)
-        # Formula: Sale Price = Target Revenue / (1 - (BV% + Com%))
+        # 10. Gross Up (Add BV + Commission + Tax on top of Sale Price)
         bv_rate = (self.porcentagem or 0.0) / 100.0
         com_rate = comissao_percent / 100.0
-        tax_rate = self.tax_rate / 100.0
+        tax_rate = (self.tax_rate or 0.0) / 100.0
 
         total_fees_rate = bv_rate + com_rate + tax_rate
 
@@ -146,7 +154,7 @@ class CalculadoraOrcamento(Document):
         if total_fees_rate < 1.0:
             valor_final_total = target_revenue / (1.0 - total_fees_rate)
         else:
-            frappe.throw("A soma de BV e Comissão não pode ser 100% ou mais (Divisão por zero).")
+            frappe.throw("A soma de BV, Comissão e Imposto não pode ser 100% ou mais (Divisão por zero).")
 
         # 11. Calculate Derived Values
         valor_bv = valor_final_total * bv_rate
@@ -185,3 +193,19 @@ def make_delivery_note(source_name):
     return dn.name
 
 
+@frappe.whitelist()
+def make_confirmacao_pedido(source_name):
+    doc = frappe.get_doc("Calculadora Orcamento", source_name)
+
+    conf = frappe.new_doc("Confirmacao Pedido")
+    conf.orcamento = doc.name
+    conf.cliente = doc.nome
+    conf.telefone = doc.telefone_whatsapp
+    conf.item = doc.item
+    conf.descricao = doc.get("descrição") or ""
+    conf.quantidade = doc.quantidade
+    conf.valor_unitario = doc.valor_final_unitario
+    conf.valor_total = doc.valor_final_total
+    conf.insert()
+
+    return conf.name

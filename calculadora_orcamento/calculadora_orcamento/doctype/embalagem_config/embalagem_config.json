@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "creation": "2026-02-12 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "custo_p",
+  "custo_m",
+  "custo_g",
+  "custo_xg",
+  "custo_xxg"
+ ],
+ "fields": [
+  {
+   "default": "4",
+   "fieldname": "custo_p",
+   "fieldtype": "Currency",
+   "label": "Custo P (por unidade)"
+  },
+  {
+   "default": "6",
+   "fieldname": "custo_m",
+   "fieldtype": "Currency",
+   "label": "Custo M (por unidade)"
+  },
+  {
+   "default": "8",
+   "fieldname": "custo_g",
+   "fieldtype": "Currency",
+   "label": "Custo G (por unidade)"
+  },
+  {
+   "default": "10",
+   "fieldname": "custo_xg",
+   "fieldtype": "Currency",
+   "label": "Custo XG (por unidade)"
+  },
+  {
+   "default": "12",
+   "fieldname": "custo_xxg",
+   "fieldtype": "Currency",
+   "label": "Custo XXG (por unidade)"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-02-12 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Calculadora Orcamento",
+ "name": "Embalagem Config",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

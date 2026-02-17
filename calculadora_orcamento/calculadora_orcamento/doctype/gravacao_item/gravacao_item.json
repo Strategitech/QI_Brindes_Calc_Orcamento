@@ -1,0 +1,72 @@
+{
+ "actions": [],
+ "creation": "2026-02-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "catalogo_gravacao",
+  "descricao",
+  "unidade",
+  "custo_unitario",
+  "column_break_grav",
+  "total"
+ ],
+ "fields": [
+  {
+   "fieldname": "catalogo_gravacao",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Cat\u00e1logo Grava\u00e7\u00e3o",
+   "options": "Catalogo Gravacao"
+  },
+  {
+   "fieldname": "descricao",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Descri\u00e7\u00e3o",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unidade",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Unidade",
+   "options": "Unit\u00e1rio\nMilheiro",
+   "depends_on": "eval:!doc.catalogo_gravacao"
+  },
+  {
+   "default": "0",
+   "fieldname": "custo_unitario",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Custo Unit\u00e1rio",
+   "non_negative": 1,
+   "precision": "2",
+   "depends_on": "eval:!doc.catalogo_gravacao"
+  },
+  {
+   "fieldname": "column_break_grav",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-02-17 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Calculadora Orcamento",
+ "name": "Gravacao Item",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,87 @@
+<style>
+	.contract-header { text-align: center; margin-bottom: 30px; }
+	.contract-header h2 { margin-bottom: 5px; }
+	.contract-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+	.contract-table th, .contract-table td { border: 1px solid #d1d8dd; padding: 8px 12px; text-align: left; }
+	.contract-table th { background-color: #f5f7fa; font-weight: bold; }
+	.contract-section { margin: 20px 0; }
+	.contract-section h4 { border-bottom: 1px solid #d1d8dd; padding-bottom: 5px; }
+	.signature-area { margin-top: 60px; display: flex; justify-content: space-between; }
+	.signature-line { width: 40%; text-align: center; }
+	.signature-line hr { margin-top: 60px; }
+</style>
+
+<div class="contract-header">
+	<h2>CONFIRMACAO DE PEDIDO</h2>
+	<p><strong>{{ doc.name }}</strong></p>
+	<p>Data: {{ frappe.utils.formatdate(doc.data_confirmacao or frappe.utils.today()) }}</p>
+</div>
+
+<div class="contract-section">
+	<h4>Dados do Cliente</h4>
+	<table class="contract-table">
+		<tr>
+			<th>Cliente</th>
+			<td>{{ doc.cliente or "" }}</td>
+		</tr>
+		<tr>
+			<th>Telefone</th>
+			<td>{{ doc.telefone or "" }}</td>
+		</tr>
+	</table>
+</div>
+
+<div class="contract-section">
+	<h4>Dados do Pedido</h4>
+	<table class="contract-table">
+		<tr>
+			<th>Item</th>
+			<td>{{ doc.item or "" }}</td>
+		</tr>
+		{% if doc.descricao %}
+		<tr>
+			<th>Descricao</th>
+			<td>{{ doc.descricao }}</td>
+		</tr>
+		{% endif %}
+		<tr>
+			<th>Quantidade</th>
+			<td>{{ doc.quantidade or 0 }}</td>
+		</tr>
+		<tr>
+			<th>Valor Unitario</th>
+			<td>R$ {{ "%.2f"|format(doc.valor_unitario or 0) }}</td>
+		</tr>
+		<tr>
+			<th>Valor Total</th>
+			<td><strong>R$ {{ "%.2f"|format(doc.valor_total or 0) }}</strong></td>
+		</tr>
+	</table>
+</div>
+
+{% if doc.observacoes %}
+<div class="contract-section">
+	<h4>Observacoes</h4>
+	<p>{{ doc.observacoes }}</p>
+</div>
+{% endif %}
+
+<div class="contract-section">
+	<h4>Termos e Condicoes</h4>
+	<p>
+		<!-- Placeholder: definir texto do contrato conforme necessidade do cliente -->
+		Ao assinar este documento, o cliente confirma o pedido acima descrito e concorda com os
+		termos de pagamento e entrega acordados entre as partes.
+	</p>
+</div>
+
+<div class="signature-area">
+	<div class="signature-line">
+		<hr>
+		<p><strong>QI Brindes</strong></p>
+	</div>
+	<div class="signature-line">
+		<hr>
+		<p><strong>{{ doc.cliente or "Cliente" }}</strong></p>
+	</div>
+</div>

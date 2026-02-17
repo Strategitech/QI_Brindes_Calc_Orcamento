@@ -1,0 +1,79 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:title",
+ "creation": "2026-02-12 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "metodo_gravacao",
+  "categoria_produto",
+  "title",
+  "notas",
+  "section_faixas",
+  "faixas"
+ ],
+ "fields": [
+  {
+   "fieldname": "metodo_gravacao",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "M\u00e9todo de Grava\u00e7\u00e3o",
+   "reqd": 1
+  },
+  {
+   "fieldname": "categoria_produto",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Categoria de Produto",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Title",
+   "unique": 1
+  },
+  {
+   "fieldname": "notas",
+   "fieldtype": "Small Text",
+   "label": "Notas"
+  },
+  {
+   "fieldname": "section_faixas",
+   "fieldtype": "Section Break",
+   "label": "Faixas de Pre\u00e7o"
+  },
+  {
+   "fieldname": "faixas",
+   "fieldtype": "Table",
+   "label": "Faixas",
+   "options": "Faixa Preco Gravacao",
+   "reqd": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-02-12 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Calculadora Orcamento",
+ "name": "Catalogo Gravacao",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

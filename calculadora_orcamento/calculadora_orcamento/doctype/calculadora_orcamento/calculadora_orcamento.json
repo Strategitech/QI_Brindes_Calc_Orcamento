@@ -15,25 +15,25 @@
   "quantidade",
   "custo_base",
   "imposto_section",
+  "aplicar_aliquota",
   "tax_rate",
+  "aliquota_calculada",
   "fotolito_section",
   "fotolito_value",
-  "gravacao_1",
+  "gravacoes_section",
+  "gravacoes",
+  "total_gravacao",
+  "deprecated_grav_section",
+  "catalogo_grav_1",
+  "desc_grav_1",
   "unit_qtd_grav_1",
   "unit_cost_grav_1",
-  "column_break_zuap",
   "total_grav_1",
-  "grava\u00e7\u00e3o_2_section",
+  "catalogo_grav_2",
+  "desc_grav_2",
   "unit_qtd_grav_2",
   "unit_cost_grav_2",
-  "column_break_xtmb",
   "total_grav_2",
-  "tabela_comiss\u00e3o_section",
-  "comis_per",
-  "comis_0",
-  "custom_commission",
-  "comis_custom",
-  "margin",
   "embalagens_section",
   "qtd_p",
   "qtd_m",
@@ -51,6 +51,12 @@
   "frete",
   "extras",
   "total_despesas",
+  "tabela_comiss\u00e3o_section",
+  "tabela_comissao",
+  "comis_0",
+  "custom_commission",
+  "comis_custom",
+  "margin",
   "bv_section",
   "porcentagem",
   "resultados_section",
@@ -117,6 +123,35 @@
    "read_only": 1
   },
   {
+   "fieldname": "imposto_section",
+   "fieldtype": "Section Break",
+   "label": "Imposto"
+  },
+  {
+   "default": "1",
+   "fieldname": "aplicar_aliquota",
+   "fieldtype": "Check",
+   "label": "Aplicar Al\u00edquota"
+  },
+  {
+   "default": "5",
+   "description": "Porcentagem de imposto (Ex: 5.00)",
+   "fieldname": "tax_rate",
+   "fieldtype": "Float",
+   "label": "Al\u00edquota (%)",
+   "non_negative": 1,
+   "permlevel": 1,
+   "precision": "2"
+  },
+  {
+   "default": "0",
+   "fieldname": "aliquota_calculada",
+   "fieldtype": "Currency",
+   "label": "Al\u00edquota Calculada",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
    "fieldname": "fotolito_section",
    "fieldtype": "Section Break",
    "label": "Fotolito"
@@ -127,15 +162,49 @@
    "options": "N/A\n20\n30"
   },
   {
-   "fieldname": "gravacao_1",
+   "fieldname": "gravacoes_section",
    "fieldtype": "Section Break",
-   "label": "Grava\u00e7\u00e3o 1"
+   "label": "Grava\u00e7\u00f5es"
+  },
+  {
+   "fieldname": "gravacoes",
+   "fieldtype": "Table",
+   "label": "Grava\u00e7\u00f5es",
+   "options": "Gravacao Item"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_gravacao",
+   "fieldtype": "Currency",
+   "label": "Total Grava\u00e7\u00e3o",
+   "read_only": 1
+  },
+  {
+   "fieldname": "deprecated_grav_section",
+   "fieldtype": "Section Break",
+   "label": "Grava\u00e7\u00f5es (Legado)",
+   "hidden": 1
+  },
+  {
+   "fieldname": "catalogo_grav_1",
+   "fieldtype": "Link",
+   "label": "Cat\u00e1logo Grava\u00e7\u00e3o 1",
+   "options": "Catalogo Gravacao",
+   "hidden": 1
+  },
+  {
+   "fieldname": "desc_grav_1",
+   "fieldtype": "Small Text",
+   "label": "Descri\u00e7\u00e3o Faixa 1",
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "unit_qtd_grav_1",
    "fieldtype": "Select",
    "label": "Unidade",
-   "options": "Unit\u00e1rio\nMilheiro"
+   "options": "Unit\u00e1rio\nMilheiro",
+   "hidden": 1
   },
   {
    "default": "0",
@@ -143,28 +212,36 @@
    "fieldtype": "Currency",
    "label": "Custo Unit\u00e1rio",
    "non_negative": 1,
-   "precision": "2"
-  },
-  {
-   "fieldname": "column_break_zuap",
-   "fieldtype": "Column Break"
+   "precision": "2",
+   "hidden": 1
   },
   {
    "fieldname": "total_grav_1",
    "fieldtype": "Currency",
-   "label": "Total Grava\u00e7\u00e3o",
-   "read_only": 1
+   "label": "Total Grava\u00e7\u00e3o 1",
+   "read_only": 1,
+   "hidden": 1
   },
   {
-   "fieldname": "grava\u00e7\u00e3o_2_section",
-   "fieldtype": "Section Break",
-   "label": "Grava\u00e7\u00e3o 2"
+   "fieldname": "catalogo_grav_2",
+   "fieldtype": "Link",
+   "label": "Cat\u00e1logo Grava\u00e7\u00e3o 2",
+   "options": "Catalogo Gravacao",
+   "hidden": 1
+  },
+  {
+   "fieldname": "desc_grav_2",
+   "fieldtype": "Small Text",
+   "label": "Descri\u00e7\u00e3o Faixa 2",
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "unit_qtd_grav_2",
    "fieldtype": "Select",
    "label": "Unidade ",
-   "options": "Unit\u00e1rio\nMilheiro"
+   "options": "Unit\u00e1rio\nMilheiro",
+   "hidden": 1
   },
   {
    "default": "0",
@@ -172,22 +249,15 @@
    "fieldtype": "Currency",
    "label": "Custo Unit\u00e1rio",
    "non_negative": 1,
-   "precision": "2"
-  },
-  {
-   "fieldname": "column_break_xtmb",
-   "fieldtype": "Column Break"
+   "precision": "2",
+   "hidden": 1
   },
   {
    "fieldname": "total_grav_2",
    "fieldtype": "Currency",
-   "label": "Total Grava\u00e7\u00e3o ",
-   "read_only": 1
-  },
-  {
-   "fieldname": "tabela_comiss\u00e3o_section",
-   "fieldtype": "Section Break",
-   "label": "Tabela Comiss\u00e3o"
+   "label": "Total Grava\u00e7\u00e3o 2",
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "embalagens_section",
@@ -226,49 +296,6 @@
   },
   {
    "default": "0",
-   "fieldname": "custo_total_embalagens",
-   "fieldtype": "Currency",
-   "label": "Custo Total Embalagens",
-   "read_only": 1
-  },
-  {
-   "fieldname": "resultados_section",
-   "fieldtype": "Section Break",
-   "label": "Resultados"
-  },
-  {
-   "default": "0",
-   "fieldname": "valor_final_total",
-   "fieldtype": "Currency",
-   "label": "Valor Final Total",
-   "read_only": 1
-  },
-  {
-   "fieldname": "comis_per",
-   "fieldtype": "Select",
-   "label": "Tabela",
-   "options": "10\n9\n8\n7\n6\n5\n4\n3\n2\n1\nCustomizada"
-  },
-  {
-   "default": "0",
-   "fieldname": "comis_0",
-   "fieldtype": "Check",
-   "label": "N\u00e3o aplicar comiss\u00e3o"
-  },
-  {
-   "depends_on": "eval:doc.custom_commission == 1;\n",
-   "fieldname": "comis_custom",
-   "fieldtype": "Float",
-   "label": "Comiss\u00e3o Customizada"
-  },
-  {
-   "default": "0",
-   "fieldname": "custom_commission",
-   "fieldtype": "Check",
-   "label": "Comiss\u00e3o Customizada"
-  },
-  {
-   "default": "0",
    "fieldname": "embal_custom",
    "fieldtype": "Check",
    "label": "Customizada"
@@ -284,6 +311,13 @@
    "fieldname": "valor_customizada",
    "fieldtype": "Currency",
    "label": "Valor Customizada"
+  },
+  {
+   "default": "0",
+   "fieldname": "custo_total_embalagens",
+   "fieldtype": "Currency",
+   "label": "Custo Total Embalagens",
+   "read_only": 1
   },
   {
    "fieldname": "outras_despesas_section",
@@ -322,6 +356,46 @@
    "read_only": 1
   },
   {
+   "fieldname": "tabela_comiss\u00e3o_section",
+   "fieldtype": "Section Break",
+   "label": "Tabela / Comiss\u00e3o"
+  },
+  {
+   "fieldname": "tabela_comissao",
+   "fieldtype": "Link",
+   "label": "Tabela",
+   "options": "Tabela Comissao"
+  },
+  {
+   "default": "0",
+   "fieldname": "comis_0",
+   "fieldtype": "Check",
+   "label": "N\u00e3o aplicar comiss\u00e3o"
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_commission",
+   "fieldtype": "Check",
+   "label": "Comiss\u00e3o Customizada"
+  },
+  {
+   "depends_on": "eval:doc.custom_commission == 1",
+   "fieldname": "comis_custom",
+   "fieldtype": "Float",
+   "label": "Comiss\u00e3o Customizada (%)",
+   "precision": "2"
+  },
+  {
+   "default": "0",
+   "fieldname": "margin",
+   "fieldtype": "Float",
+   "label": "Margem",
+   "non_negative": 1,
+   "permlevel": 1,
+   "precision": "2",
+   "reqd": 1
+  },
+  {
    "fieldname": "bv_section",
    "fieldtype": "Section Break",
    "label": "BV"
@@ -332,12 +406,9 @@
    "label": "Porcentagem"
   },
   {
-   "fieldname": "margin",
-   "fieldtype": "Float",
-   "label": "Margem",
-   "non_negative": 1,
-   "precision": "2",
-   "reqd": 1
+   "fieldname": "resultados_section",
+   "fieldtype": "Section Break",
+   "label": "Resultados"
   },
   {
    "default": "0",
@@ -345,6 +416,13 @@
    "fieldtype": "Currency",
    "label": "Valor Final Unit\u00e1rio",
    "precision": "2",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "valor_final_total",
+   "fieldtype": "Currency",
+   "label": "Valor Final Total",
    "read_only": 1
   },
   {
@@ -361,30 +439,17 @@
    "read_only": 1
   },
   {
-   "fieldname": "imposto_section",
-   "fieldtype": "Section Break",
-   "label": "Imposto"
-  },
-  {
-   "default": "5",
-   "description": "Porcentagem de imposto (Ex: 5.00)",
-   "fieldname": "tax_rate",
-   "fieldtype": "Float",
-   "label": "Al\u00edquota",
-   "non_negative": 1,
-   "precision": "2"
-  },
-  {
    "fieldname": "total_tax",
    "fieldtype": "Currency",
    "label": "Total Imposto",
+   "permlevel": 1,
    "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-09 01:15:42.793019",
+ "modified": "2026-02-12 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Calculadora Orcamento",
  "name": "Calculadora Orcamento",
@@ -399,6 +464,20 @@
    "read": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Sales User",
    "write": 1
   }
  ],

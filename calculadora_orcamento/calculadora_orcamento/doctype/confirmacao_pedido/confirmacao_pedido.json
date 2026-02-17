@@ -1,0 +1,144 @@
+{
+ "actions": [],
+ "autoname": "format:CONF-{MM}-{YY}-{#####}",
+ "creation": "2026-02-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "orcamento",
+  "status",
+  "data_confirmacao",
+  "column_break_info",
+  "cliente",
+  "telefone",
+  "dados_section",
+  "item",
+  "descricao",
+  "quantidade",
+  "column_break_valores",
+  "valor_unitario",
+  "valor_total",
+  "observacoes_section",
+  "observacoes"
+ ],
+ "fields": [
+  {
+   "fieldname": "orcamento",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Or\u00e7amento",
+   "options": "Calculadora Orcamento",
+   "reqd": 1
+  },
+  {
+   "default": "Pendente",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Pendente\nAssinado\nCancelado"
+  },
+  {
+   "fieldname": "data_confirmacao",
+   "fieldtype": "Date",
+   "label": "Data de Confirma\u00e7\u00e3o"
+  },
+  {
+   "fieldname": "column_break_info",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cliente",
+   "fieldtype": "Data",
+   "label": "Cliente",
+   "read_only": 1
+  },
+  {
+   "fieldname": "telefone",
+   "fieldtype": "Data",
+   "label": "Telefone",
+   "options": "Phone",
+   "read_only": 1
+  },
+  {
+   "fieldname": "dados_section",
+   "fieldtype": "Section Break",
+   "label": "Dados do Pedido"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Data",
+   "label": "Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "descricao",
+   "fieldtype": "Small Text",
+   "label": "Descri\u00e7\u00e3o",
+   "read_only": 1
+  },
+  {
+   "fieldname": "quantidade",
+   "fieldtype": "Int",
+   "label": "Quantidade",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_valores",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "valor_unitario",
+   "fieldtype": "Currency",
+   "label": "Valor Unit\u00e1rio",
+   "read_only": 1
+  },
+  {
+   "fieldname": "valor_total",
+   "fieldtype": "Currency",
+   "label": "Valor Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "observacoes_section",
+   "fieldtype": "Section Break",
+   "label": "Observa\u00e7\u00f5es"
+  },
+  {
+   "fieldname": "observacoes",
+   "fieldtype": "Text",
+   "label": "Observa\u00e7\u00f5es"
+  }
+ ],
+ "links": [],
+ "modified": "2026-02-17 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Calculadora Orcamento",
+ "name": "Confirmacao Pedido",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Sales User",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
