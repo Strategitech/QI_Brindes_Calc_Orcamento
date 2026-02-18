@@ -100,6 +100,16 @@ frappe.ui.form.on("Calculadora Orcamento", {
 		}
 	},
 
+	item(frm) {
+		if (frm.doc.item) {
+			frappe.db.get_value("Item", frm.doc.item, "image", (r) => {
+				if (r && r.image) {
+					frm.set_value("imagem_produto", r.image);
+				}
+			});
+		}
+	},
+
 	tabela_comissao(frm) {
 		if (frm.doc.tabela_comissao) {
 			frappe.db.get_doc("Tabela Comissao", frm.doc.tabela_comissao).then((doc) => {

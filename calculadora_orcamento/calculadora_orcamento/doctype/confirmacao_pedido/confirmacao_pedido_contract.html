@@ -75,6 +75,42 @@
 	</p>
 </div>
 
+{% if doc.endereco_logradouro or doc.endereco_cidade or doc.endereco_cep %}
+<div class="contract-section">
+	<h4>Endere&ccedil;o de Entrega</h4>
+	<table class="contract-table">
+		<tr>
+			<th>Logradouro</th>
+			<td>{{ doc.endereco_logradouro or "" }}</td>
+		</tr>
+		{% if doc.endereco_complemento %}
+		<tr>
+			<th>Complemento</th>
+			<td>{{ doc.endereco_complemento }}</td>
+		</tr>
+		{% endif %}
+		{% if doc.endereco_bairro %}
+		<tr>
+			<th>Bairro</th>
+			<td>{{ doc.endereco_bairro }}</td>
+		</tr>
+		{% endif %}
+		<tr>
+			<th>Cidade</th>
+			<td>{{ doc.endereco_cidade or "" }}</td>
+		</tr>
+		<tr>
+			<th>Estado</th>
+			<td>{{ doc.endereco_estado or "" }}</td>
+		</tr>
+		<tr>
+			<th>CEP</th>
+			<td>{{ doc.endereco_cep or "" }}</td>
+		</tr>
+	</table>
+</div>
+{% endif %}
+
 <div class="signature-area">
 	<div class="signature-line">
 		<hr>

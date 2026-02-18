@@ -139,13 +139,38 @@ app_logo_url = "/assets/calculadora_orcamento/QI_logo.png"  # noqa: F811
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"QI Shipment": {
+		"before_save": "calculadora_orcamento.calculadora_orcamento.events.set_orcamento_on_shipment"
+	}
+}
+
+# Custom Fields
+# ---------------
+
+custom_fields = {
+	"Delivery Note": [
+		{
+			"fieldname": "orcamento",
+			"fieldtype": "Link",
+			"label": "Orçamento",
+			"options": "Calculadora Orcamento",
+			"insert_after": "customer",
+			"read_only": 1,
+		}
+	],
+	"QI Shipment": [
+		{
+			"fieldname": "orcamento",
+			"fieldtype": "Link",
+			"label": "Orçamento",
+			"options": "Calculadora Orcamento",
+			"insert_after": "delivery_note",
+			"read_only": 1,
+			"in_list_view": 1,
+		}
+	],
+}
 
 # Scheduled Tasks
 # ---------------

@@ -11,6 +11,7 @@
   "telefone_whatsapp",
   "produto_section",
   "item",
+  "imagem_produto",
   "descri\u00e7\u00e3o",
   "quantidade",
   "custo_base",
@@ -49,6 +50,7 @@
   "gasoline",
   "motoboy",
   "frete",
+  "cliche",
   "extras",
   "total_despesas",
   "tabela_comiss\u00e3o_section",
@@ -102,10 +104,18 @@
    "reqd": 1
   },
   {
+   "fieldname": "imagem_produto",
+   "fieldtype": "Attach Image",
+   "label": "Imagem do Produto",
+   "description": "Selecione a imagem para o or\u00e7amento"
+  },
+  {
    "fieldname": "descri\u00e7\u00e3o",
    "fieldtype": "Data",
    "label": "Descri\u00e7\u00e3o",
-   "read_only": 1
+   "read_only": 1,
+   "fetch_from": "item.description",
+   "fetch_if_empty": 1
   },
   {
    "default": "0",
@@ -343,6 +353,11 @@
    "fieldname": "frete",
    "fieldtype": "Currency",
    "label": "Frete"
+  },
+  {
+   "fieldname": "cliche",
+   "fieldtype": "Currency",
+   "label": "Clich\u00ea"
   },
   {
    "fieldname": "extras",

@@ -101,6 +101,7 @@ class CalculadoraOrcamento(Document):
                          (self.gasoline or 0) + \
                          (self.motoboy or 0) + \
                          (self.frete or 0) + \
+                         (self.cliche or 0) + \
                          (self.extras or 0)
         self.total_despesas = total_despesas
 
@@ -182,6 +183,7 @@ def make_delivery_note(source_name):
     dn = frappe.new_doc("Delivery Note")
     dn.customer = doc.nome
     dn.company = company
+    dn.orcamento = doc.name
     dn.append("items", {
         "item_code": doc.item,
         "qty": doc.quantidade,
@@ -201,11 +203,23 @@ def make_confirmacao_pedido(source_name):
     conf.orcamento = doc.name
     conf.cliente = doc.nome
     conf.telefone = doc.telefone_whatsapp
-    conf.item = doc.item
+    conf.item = frappe.db.get_value("Item", doc.item, "item_name") or doc.item
     conf.descricao = doc.get("descrição") or ""
     conf.quantidade = doc.quantidade
     conf.valor_unitario = doc.valor_final_unitario
     conf.valor_total = doc.valor_final_total
+
+    # Auto-populate address from Customer
+    from frappe.contacts.doctype.address.address import get_default_address
+    address_name = get_default_address("Customer", doc.nome)
+    if address_name:
+        addr = frappe.get_doc("Address", address_name)
+        conf.endereco_logradouro = addr.address_line1
+        conf.endereco_complemento = addr.address_line2
+        conf.endereco_cidade = addr.city
+        conf.endereco_estado = addr.state
+        conf.endereco_cep = addr.pincode
+
     conf.insert()
 
     return conf.name

@@ -19,7 +19,15 @@
   "valor_unitario",
   "valor_total",
   "observacoes_section",
-  "observacoes"
+  "observacoes",
+  "endereco_section",
+  "endereco_logradouro",
+  "endereco_complemento",
+  "endereco_bairro",
+  "column_break_endereco",
+  "endereco_cidade",
+  "endereco_estado",
+  "endereco_cep"
  ],
  "fields": [
   {
@@ -108,6 +116,45 @@
    "fieldname": "observacoes",
    "fieldtype": "Text",
    "label": "Observa\u00e7\u00f5es"
+  },
+  {
+   "fieldname": "endereco_section",
+   "fieldtype": "Section Break",
+   "label": "Endere\u00e7o de Entrega"
+  },
+  {
+   "fieldname": "endereco_logradouro",
+   "fieldtype": "Data",
+   "label": "Logradouro"
+  },
+  {
+   "fieldname": "endereco_complemento",
+   "fieldtype": "Data",
+   "label": "Complemento"
+  },
+  {
+   "fieldname": "endereco_bairro",
+   "fieldtype": "Data",
+   "label": "Bairro"
+  },
+  {
+   "fieldname": "column_break_endereco",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "endereco_cidade",
+   "fieldtype": "Data",
+   "label": "Cidade"
+  },
+  {
+   "fieldname": "endereco_estado",
+   "fieldtype": "Data",
+   "label": "Estado"
+  },
+  {
+   "fieldname": "endereco_cep",
+   "fieldtype": "Data",
+   "label": "CEP"
   }
  ],
  "links": [],
