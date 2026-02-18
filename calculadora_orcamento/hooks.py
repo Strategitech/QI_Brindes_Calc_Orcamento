@@ -85,7 +85,8 @@ app_logo_url = "/assets/calculadora_orcamento/QI_logo.png"  # noqa: F811
 # ------------
 
 # before_install = "calculadora_orcamento.install.before_install"
-# after_install = "calculadora_orcamento.install.after_install"
+after_install = "calculadora_orcamento.calculadora_orcamento.events.sync_custom_fields"
+after_migrate = "calculadora_orcamento.calculadora_orcamento.events.sync_custom_fields"
 
 # Uninstallation
 # ------------
