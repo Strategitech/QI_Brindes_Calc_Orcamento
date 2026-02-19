@@ -101,13 +101,75 @@ frappe.ui.form.on("Calculadora Orcamento", {
 	},
 
 	item(frm) {
-		if (frm.doc.item) {
-			frappe.db.get_value("Item", frm.doc.item, "image", (r) => {
-				if (r && r.image) {
-					frm.set_value("imagem_produto", r.image);
+		if (!frm.doc.item) return;
+
+		// Fetch Item main image + all attached image files
+		Promise.all([
+			new Promise((resolve) => {
+				frappe.db.get_value("Item", frm.doc.item, "image", (r) => {
+					resolve(r && r.image ? r.image : null);
+				});
+			}),
+			new Promise((resolve) => {
+				frappe.call({
+					method: "frappe.client.get_list",
+					args: {
+						doctype: "File",
+						filters: {
+							attached_to_doctype: "Item",
+							attached_to_name: frm.doc.item,
+							is_folder: 0,
+						},
+						fields: ["file_url"],
+						limit_page_length: 50,
+					},
+					callback: (r) => resolve(r.message || []),
+				});
+			}),
+		]).then(([main_image, files]) => {
+			let urls = new Set();
+			if (main_image) urls.add(main_image);
+			files.forEach((f) => {
+				if (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.file_url || "")) {
+					urls.add(f.file_url);
 				}
 			});
-		}
+
+			let images = Array.from(urls);
+			if (images.length === 0) return;
+
+			if (images.length === 1) {
+				frm.set_value("imagem_produto", images[0]);
+				return;
+			}
+
+			// Multiple images — show picker dialog
+			let html = '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">';
+			images.forEach((url) => {
+				html +=
+					`<div class="img-pick" data-url="${url}" style="cursor:pointer;border:3px solid transparent;border-radius:6px;padding:4px;">` +
+					`<img src="${url}" style="max-width:160px;max-height:160px;object-fit:contain;border-radius:4px;">` +
+					`</div>`;
+			});
+			html += "</div>";
+
+			let d = new frappe.ui.Dialog({
+				title: __("Selecione a Imagem do Produto"),
+				fields: [{ fieldtype: "HTML", options: html }],
+			});
+			d.show();
+
+			d.$wrapper.find(".img-pick").on("click", function () {
+				frm.set_value("imagem_produto", $(this).data("url"));
+				d.hide();
+			});
+			d.$wrapper.find(".img-pick").on("mouseenter", function () {
+				$(this).css("border-color", "#1b8fdb");
+			});
+			d.$wrapper.find(".img-pick").on("mouseleave", function () {
+				$(this).css("border-color", "transparent");
+			});
+		});
 	},
 
 	tabela_comissao(frm) {
