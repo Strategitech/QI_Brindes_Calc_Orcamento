@@ -408,24 +408,13 @@
         {% endif %}
       </span>
     </li>
-    <li>Data De Entrega:
-      <span class="value">
-        {% if doc.data_confirmacao %}
-          {{ frappe.utils.formatdate(frappe.utils.add_days(doc.data_confirmacao, 21), "dd/MM/yyyy") }}
-          (estimativa)
-        {% else %}
-          &mdash;
-        {% endif %}
-      </span>
-    </li>
   </ul>
 
   <!-- OBS -->
   <div class="obs-box">
     <p><strong>OBS:</strong></p>
-    <p>Entrega de entrega at&eacute; 15 dias corridos, sendo o pagamento a vista.</p>
     <p>Em caso de cancelamento ap&oacute;s o in&iacute;cio da produ&ccedil;&atilde;o, ser&aacute; faturado 100% do valor total do
-       pedido, conforme clausulas abaixo</p>
+       pedido, conforme cl&aacute;usulas abaixo.</p>
     {% if doc.observacoes %}
       <p>{{ doc.observacoes }}</p>
     {% endif %}
