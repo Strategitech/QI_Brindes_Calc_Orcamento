@@ -107,7 +107,7 @@
    "fieldname": "imagem_produto",
    "fieldtype": "Attach Image",
    "label": "Imagem do Produto",
-   "description": "Selecione a imagem para o or\u00e7amento"
+   "read_only": 1
   },
   {
    "fieldname": "descri\u00e7\u00e3o",

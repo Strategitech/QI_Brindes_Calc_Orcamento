@@ -1,6 +1,78 @@
 // Copyright (c) 2025, Strategitech and contributors
 // For license information, please see license.txt
 
+function open_image_picker(frm) {
+	if (!frm.doc.item) return;
+
+	Promise.all([
+		new Promise((resolve) => {
+			frappe.db.get_value("Item", frm.doc.item, "image", (r) => {
+				resolve(r && r.image ? r.image : null);
+			});
+		}),
+		new Promise((resolve) => {
+			frappe.call({
+				method: "frappe.client.get_list",
+				args: {
+					doctype: "File",
+					filters: {
+						attached_to_doctype: "Item",
+						attached_to_name: frm.doc.item,
+						is_folder: 0,
+					},
+					fields: ["file_url"],
+					limit_page_length: 50,
+				},
+				callback: (r) => resolve(r.message || []),
+			});
+		}),
+	]).then(([main_image, files]) => {
+		let urls = new Set();
+		if (main_image) urls.add(main_image);
+		files.forEach((f) => {
+			if (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.file_url || "")) {
+				urls.add(f.file_url);
+			}
+		});
+
+		let images = Array.from(urls);
+		if (images.length === 0) return;
+
+		if (images.length === 1) {
+			frm.set_value("imagem_produto", images[0]);
+			return;
+		}
+
+		// Multiple images — show picker dialog with thumbnails
+		let html =
+			'<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">';
+		images.forEach((url) => {
+			html +=
+				`<div class="img-pick" data-url="${url}" style="cursor:pointer;border:3px solid transparent;border-radius:6px;padding:4px;">` +
+				`<img src="${url}" style="max-width:160px;max-height:160px;object-fit:contain;border-radius:4px;">` +
+				`</div>`;
+		});
+		html += "</div>";
+
+		let d = new frappe.ui.Dialog({
+			title: __("Selecione a Imagem do Produto"),
+			fields: [{ fieldtype: "HTML", options: html }],
+		});
+		d.show();
+
+		d.$wrapper.find(".img-pick").on("click", function () {
+			frm.set_value("imagem_produto", $(this).data("url"));
+			d.hide();
+		});
+		d.$wrapper.find(".img-pick").on("mouseenter", function () {
+			$(this).css("border-color", "#1b8fdb");
+		});
+		d.$wrapper.find(".img-pick").on("mouseleave", function () {
+			$(this).css("border-color", "transparent");
+		});
+	});
+}
+
 frappe.ui.form.on("Calculadora Orcamento", {
 	refresh(frm) {
 		if (frm.doc.docstatus === 0 && !frm.is_new()) {
@@ -98,78 +170,24 @@ frappe.ui.form.on("Calculadora Orcamento", {
 				});
 			});
 		}
+
+		// "Selecionar Imagem" button next to the read-only image field
+		if (frm.doc.item && frm.fields_dict.imagem_produto) {
+			frm.fields_dict.imagem_produto.$wrapper.find(".btn-change-image").remove();
+			let $btn = $(
+				'<button class="btn btn-xs btn-default btn-change-image" style="margin-top:5px;">Selecionar Imagem</button>'
+			);
+			$btn.on("click", () => open_image_picker(frm));
+			frm.fields_dict.imagem_produto.$wrapper.append($btn);
+		}
 	},
 
 	item(frm) {
-		if (!frm.doc.item) return;
-
-		// Fetch Item main image + all attached image files
-		Promise.all([
-			new Promise((resolve) => {
-				frappe.db.get_value("Item", frm.doc.item, "image", (r) => {
-					resolve(r && r.image ? r.image : null);
-				});
-			}),
-			new Promise((resolve) => {
-				frappe.call({
-					method: "frappe.client.get_list",
-					args: {
-						doctype: "File",
-						filters: {
-							attached_to_doctype: "Item",
-							attached_to_name: frm.doc.item,
-							is_folder: 0,
-						},
-						fields: ["file_url"],
-						limit_page_length: 50,
-					},
-					callback: (r) => resolve(r.message || []),
-				});
-			}),
-		]).then(([main_image, files]) => {
-			let urls = new Set();
-			if (main_image) urls.add(main_image);
-			files.forEach((f) => {
-				if (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.file_url || "")) {
-					urls.add(f.file_url);
-				}
-			});
-
-			let images = Array.from(urls);
-			if (images.length === 0) return;
-
-			if (images.length === 1) {
-				frm.set_value("imagem_produto", images[0]);
-				return;
-			}
-
-			// Multiple images — show picker dialog
-			let html = '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">';
-			images.forEach((url) => {
-				html +=
-					`<div class="img-pick" data-url="${url}" style="cursor:pointer;border:3px solid transparent;border-radius:6px;padding:4px;">` +
-					`<img src="${url}" style="max-width:160px;max-height:160px;object-fit:contain;border-radius:4px;">` +
-					`</div>`;
-			});
-			html += "</div>";
-
-			let d = new frappe.ui.Dialog({
-				title: __("Selecione a Imagem do Produto"),
-				fields: [{ fieldtype: "HTML", options: html }],
-			});
-			d.show();
-
-			d.$wrapper.find(".img-pick").on("click", function () {
-				frm.set_value("imagem_produto", $(this).data("url"));
-				d.hide();
-			});
-			d.$wrapper.find(".img-pick").on("mouseenter", function () {
-				$(this).css("border-color", "#1b8fdb");
-			});
-			d.$wrapper.find(".img-pick").on("mouseleave", function () {
-				$(this).css("border-color", "transparent");
-			});
-		});
+		if (!frm.doc.item) {
+			frm.set_value("imagem_produto", "");
+			return;
+		}
+		open_image_picker(frm);
 	},
 
 	tabela_comissao(frm) {
@@ -194,7 +212,12 @@ frappe.ui.form.on("Calculadora Orcamento", {
 						args: { catalogo_name: row.catalogo_gravacao, qty: frm.doc.quantidade || 0 },
 						callback: function (r) {
 							if (r.message) {
-								frappe.model.set_value(row.doctype, row.name, "descricao", r.message.descricao);
+								frappe.model.set_value(
+									row.doctype,
+									row.name,
+									"descricao",
+									r.message.descricao
+								);
 							}
 						},
 					});
