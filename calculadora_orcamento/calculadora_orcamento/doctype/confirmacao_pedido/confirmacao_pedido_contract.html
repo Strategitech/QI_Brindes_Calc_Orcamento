@@ -1,123 +1,609 @@
+{#
+  ERPNext Print Format: Contrato de Venda de Produtos Personalizados
+  DocType: Confirmacao Pedido
+
+  FIELD MAPPING:
+  ─────────────────────────────────────────────
+  doc.orcamento           → Link to Calculadora Orcamento
+  doc.status              → Pendente / Assinado / Cancelado
+  doc.data_confirmacao    → Confirmation date
+  doc.cliente             → Customer name (auto-populated, read-only Data)
+  doc.telefone            → Phone (auto-populated, read-only Data)
+  doc.item                → Item name (auto-populated as item_name, read-only Data)
+  doc.descricao           → Item description (auto-populated, read-only)
+  doc.quantidade          → Qty (auto-populated, read-only Int)
+  doc.valor_unitario      → Unit price (auto-populated, read-only Currency)
+  doc.valor_total         → Total price (auto-populated, read-only Currency)
+  doc.observacoes         → Free text notes/terms
+  doc.endereco_logradouro → Delivery address street
+  doc.endereco_complemento→ Delivery address complement
+  doc.endereco_bairro     → Delivery address neighborhood
+  doc.endereco_cidade     → Delivery address city
+  doc.endereco_estado     → Delivery address state
+  doc.endereco_cep        → Delivery address postal code
+
+  NOTE: doc.item now contains item_name (not item_code) to hide supplier.
+  Address fields are editable on the Confirmacao Pedido form.
+#}
+
+{% set orc_doc = frappe.get_doc("Calculadora Orcamento", doc.orcamento) if doc.orcamento else None %}
+{% set customer_doc = frappe.get_doc("Customer", orc_doc.nome) if orc_doc and orc_doc.nome else None %}
+
+{% set company_name = frappe.defaults.get_defaults().company %}
+{% set company_doc = frappe.get_doc("Company", company_name) if company_name else None %}
+{% set company_address_name = frappe.get_value("Dynamic Link", {
+    "link_doctype": "Company",
+    "link_name": company_name,
+    "parenttype": "Address"
+}, "parent") if company_name else None %}
+{% set company_addr = frappe.get_doc("Address", company_address_name) if company_address_name else None %}
+
+{# Build delivery address string from doc.endereco_* fields #}
+{% set delivery_parts = [] %}
+{% if doc.endereco_logradouro %}{% do delivery_parts.append(doc.endereco_logradouro) %}{% endif %}
+{% if doc.endereco_complemento %}{% do delivery_parts.append(doc.endereco_complemento) %}{% endif %}
+{% if doc.endereco_bairro %}{% do delivery_parts.append(doc.endereco_bairro) %}{% endif %}
+{% if doc.endereco_cidade and doc.endereco_estado %}
+  {% do delivery_parts.append(doc.endereco_cidade ~ " - " ~ doc.endereco_estado) %}
+{% elif doc.endereco_cidade %}
+  {% do delivery_parts.append(doc.endereco_cidade) %}
+{% endif %}
+{% if doc.endereco_cep %}{% do delivery_parts.append("CEP " ~ doc.endereco_cep) %}{% endif %}
+{% set delivery_address = delivery_parts | join(", ") if delivery_parts else None %}
+
+{# Customer address for CONTRATANTE section (from Customer doc) #}
+{% set customer_address_name = frappe.get_value("Dynamic Link", {
+    "link_doctype": "Customer",
+    "link_name": orc_doc.nome,
+    "parenttype": "Address"
+}, "parent") if orc_doc and orc_doc.nome else None %}
+{% set customer_addr = frappe.get_doc("Address", customer_address_name) if customer_address_name else None %}
+
 <style>
-	.contract-header { text-align: center; margin-bottom: 30px; }
-	.contract-header h2 { margin-bottom: 5px; }
-	.contract-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-	.contract-table th, .contract-table td { border: 1px solid #d1d8dd; padding: 8px 12px; text-align: left; }
-	.contract-table th { background-color: #f5f7fa; font-weight: bold; }
-	.contract-section { margin: 20px 0; }
-	.contract-section h4 { border-bottom: 1px solid #d1d8dd; padding-bottom: 5px; }
-	.signature-area { margin-top: 60px; display: flex; justify-content: space-between; }
-	.signature-line { width: 40%; text-align: center; }
-	.signature-line hr { margin-top: 60px; }
+  @page {
+    size: A4;
+    margin: 15mm 20mm 25mm 20mm;
+  }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10pt;
+    color: #333;
+    line-height: 1.6;
+  }
+
+  .contrato-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .watermark {
+    position: fixed;
+    top: 50%;
+    left: 55%;
+    transform: translate(-50%, -50%);
+    opacity: 0.05;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .watermark img {
+    max-width: 500px;
+    max-height: 500px;
+  }
+
+  .header-section {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .header-section img.company-logo {
+    max-height: 80px;
+    margin-bottom: 5px;
+  }
+
+  .contract-title {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #333;
+    text-align: center;
+    margin: 10px 0 20px 0;
+    line-height: 1.3;
+  }
+
+  .section-box {
+    border: 1px solid #999;
+    padding: 4px 0;
+    text-align: center;
+    font-weight: 700;
+    font-size: 10pt;
+    margin: 20px 0 10px 0;
+    background: #fff;
+  }
+
+  .partes-section {
+    margin-bottom: 20px;
+  }
+
+  .partes-section p {
+    margin: 6px 0;
+    text-align: justify;
+  }
+
+  .partes-label {
+    font-weight: 700;
+  }
+
+  .dados-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 15px 0;
+  }
+
+  .dados-table th {
+    background: #f5f5f5;
+    border: 1px solid #999;
+    padding: 8px 6px;
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .dados-table td {
+    border: 1px solid #999;
+    padding: 8px 6px;
+    font-size: 9.5pt;
+    vertical-align: middle;
+  }
+
+  .text-center { text-align: center; }
+  .text-right { text-align: right; }
+
+  .summary-list {
+    margin: 15px 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .summary-list li {
+    margin: 4px 0;
+    font-size: 10pt;
+    color: #E87722;
+    font-weight: 600;
+  }
+
+  .summary-list li::before {
+    content: "\27A4 ";
+  }
+
+  .summary-list li span.value {
+    color: #333;
+    font-weight: 400;
+  }
+
+  .obs-box {
+    background: #FFF8E1;
+    border: 1px solid #E87722;
+    border-radius: 3px;
+    padding: 10px 15px;
+    margin: 15px 0 20px 0;
+    font-size: 9.5pt;
+    color: #E87722;
+  }
+
+  .obs-box p {
+    margin: 3px 0;
+  }
+
+  .clausulas-title {
+    border: 1px solid #999;
+    border-left: none;
+    border-right: none;
+    padding: 6px 0;
+    text-align: center;
+    font-weight: 700;
+    font-size: 10pt;
+    margin: 25px 0 15px 0;
+    text-decoration: underline;
+  }
+
+  .clause-heading {
+    font-weight: 700;
+    font-size: 10pt;
+    margin: 15px 0 5px 0;
+  }
+
+  .clause-text {
+    text-align: justify;
+    font-size: 9.5pt;
+    margin: 4px 0;
+    line-height: 1.5;
+  }
+
+  .clause-subitem {
+    margin-left: 15px;
+    margin-top: 3px;
+    margin-bottom: 3px;
+  }
+
+  .clause-list {
+    margin-left: 30px;
+    margin-top: 3px;
+  }
+
+  .clause-list li {
+    margin: 3px 0;
+    font-size: 9.5pt;
+    text-align: justify;
+  }
+
+  .signature-section {
+    margin-top: 50px;
+  }
+
+  .signature-date {
+    text-align: right;
+    margin-bottom: 40px;
+    font-size: 10pt;
+  }
+
+  .signature-block {
+    margin-bottom: 40px;
+  }
+
+  .signature-block .label {
+    font-weight: 700;
+    font-size: 10pt;
+  }
+
+  .signature-line {
+    border-bottom: 1px solid #333;
+    width: 300px;
+    margin-top: 30px;
+    padding-bottom: 2px;
+    font-size: 9pt;
+  }
+
+  .page-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 8pt;
+    color: #E87722;
+    border-top: 2px solid #E87722;
+    padding-top: 6px;
+  }
+
+  .page-footer a {
+    color: #E87722;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
 </style>
 
-<div class="contract-header">
-	<h2>CONFIRMACAO DE PEDIDO</h2>
-	<p><strong>{{ doc.name }}</strong></p>
-	<p>Data: {{ frappe.utils.formatdate(doc.data_confirmacao or frappe.utils.today()) }}</p>
-</div>
+<div class="contrato-wrapper">
 
-<div class="contract-section">
-	<h4>Dados do Cliente</h4>
-	<table class="contract-table">
-		<tr>
-			<th>Cliente</th>
-			<td>{{ doc.cliente or "" }}</td>
-		</tr>
-		<tr>
-			<th>Telefone</th>
-			<td>{{ doc.telefone or "" }}</td>
-		</tr>
-	</table>
-</div>
+  {% if company_doc and company_doc.company_logo %}
+  <div class="watermark">
+    <img src="{{ company_doc.company_logo }}" alt="">
+  </div>
+  {% endif %}
 
-<div class="contract-section">
-	<h4>Dados do Pedido</h4>
-	<table class="contract-table">
-		<tr>
-			<th>Item</th>
-			<td>{{ doc.item or "" }}</td>
-		</tr>
-		{% if doc.descricao %}
-		<tr>
-			<th>Descricao</th>
-			<td>{{ doc.descricao }}</td>
-		</tr>
-		{% endif %}
-		<tr>
-			<th>Quantidade</th>
-			<td>{{ doc.quantidade or 0 }}</td>
-		</tr>
-		<tr>
-			<th>Valor Unitario</th>
-			<td>R$ {{ "%.2f"|format(doc.valor_unitario or 0) }}</td>
-		</tr>
-		<tr>
-			<th>Valor Total</th>
-			<td><strong>R$ {{ "%.2f"|format(doc.valor_total or 0) }}</strong></td>
-		</tr>
-	</table>
-</div>
+  <!-- PAGE 1: HEADER + PARTIES + ITEMS + CLAUSES START -->
 
-{% if doc.observacoes %}
-<div class="contract-section">
-	<h4>Observacoes</h4>
-	<p>{{ doc.observacoes }}</p>
-</div>
-{% endif %}
+  <div class="header-section">
+    {% if company_doc and company_doc.company_logo %}
+      <img class="company-logo" src="{{ company_doc.company_logo }}" alt="{{ company_doc.name }}">
+    {% elif company_doc %}
+      <h2 style="color: #E87722; margin: 0;">{{ company_doc.name }}</h2>
+    {% endif %}
+  </div>
 
-<div class="contract-section">
-	<h4>Termos e Condicoes</h4>
-	<p>
-		<!-- Placeholder: definir texto do contrato conforme necessidade do cliente -->
-		Ao assinar este documento, o cliente confirma o pedido acima descrito e concorda com os
-		termos de pagamento e entrega acordados entre as partes.
-	</p>
-</div>
+  <div class="contract-title">
+    CONTRATO DE VENDA DE PRODUTOS<br>PERSONALIZADOS
+  </div>
 
-{% if doc.endereco_logradouro or doc.endereco_cidade or doc.endereco_cep %}
-<div class="contract-section">
-	<h4>Endere&ccedil;o de Entrega</h4>
-	<table class="contract-table">
-		<tr>
-			<th>Logradouro</th>
-			<td>{{ doc.endereco_logradouro or "" }}</td>
-		</tr>
-		{% if doc.endereco_complemento %}
-		<tr>
-			<th>Complemento</th>
-			<td>{{ doc.endereco_complemento }}</td>
-		</tr>
-		{% endif %}
-		{% if doc.endereco_bairro %}
-		<tr>
-			<th>Bairro</th>
-			<td>{{ doc.endereco_bairro }}</td>
-		</tr>
-		{% endif %}
-		<tr>
-			<th>Cidade</th>
-			<td>{{ doc.endereco_cidade or "" }}</td>
-		</tr>
-		<tr>
-			<th>Estado</th>
-			<td>{{ doc.endereco_estado or "" }}</td>
-		</tr>
-		<tr>
-			<th>CEP</th>
-			<td>{{ doc.endereco_cep or "" }}</td>
-		</tr>
-	</table>
-</div>
-{% endif %}
+  <!-- PARTES -->
+  <div class="section-box">PARTES:</div>
 
-<div class="signature-area">
-	<div class="signature-line">
-		<hr>
-		<p><strong>QI Brindes</strong></p>
-	</div>
-	<div class="signature-line">
-		<hr>
-		<p><strong>{{ doc.cliente or "Cliente" }}</strong></p>
-	</div>
+  <div class="partes-section">
+    <p>
+      <span class="partes-label">CONTRATADA:</span>
+      {% if company_doc %}
+        {{ company_doc.name }}, inscrita no CNPJ sob o n&uacute;mero
+        {{ company_doc.tax_id or "_______________" }}
+        {%- if company_doc.custom_inscricao_estadual %},
+          com Inscri&ccedil;&atilde;o Estadual {{ company_doc.custom_inscricao_estadual }}
+        {% endif %}
+        {%- if company_doc.custom_ccm %}
+          e C.C.M. {{ company_doc.custom_ccm }}
+        {% endif %}
+        {%- if company_addr %},
+          com endere&ccedil;o {{ company_addr.address_line1 }}
+          {%- if company_addr.address_line2 %} - {{ company_addr.address_line2 }}{% endif -%}
+          , {{ company_addr.city }} - {{ company_addr.state }},
+          {{ company_addr.pincode }}.
+        {% endif %}
+      {% else %}
+        [Dados da empresa]
+      {% endif %}
+    </p>
+    <p>
+      <span class="partes-label">CONTRATANTE:</span>
+      {{ doc.cliente }}
+      {%- if customer_doc and customer_doc.tax_id %},
+        inscrito(a) no CNPJ/CPF sob o n&uacute;mero {{ customer_doc.tax_id }}
+      {% endif %}
+      {%- if customer_addr -%}
+        , com endere&ccedil;o {{ customer_addr.address_line1 }}
+        {%- if customer_addr.address_line2 %} - {{ customer_addr.address_line2 }}{% endif -%}
+        , {{ customer_addr.city }} - {{ customer_addr.state }},
+        {{ customer_addr.pincode }}
+      {%- endif -%}
+      {%- if doc.telefone %}, contato: {{ doc.telefone }}{% endif -%}
+      .
+    </p>
+  </div>
+
+  <!-- DADOS DA COMPRA -->
+  <div class="section-box">DADOS DA COMPRA</div>
+
+  <table class="dados-table">
+    <thead>
+      <tr>
+        <th style="width: 45%;">Produto</th>
+        <th style="width: 15%;">Quantidade</th>
+        <th style="width: 20%;">Valor Unit&aacute;rio</th>
+        <th style="width: 20%;">Valor Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ doc.item }}{% if doc.descricao %}<br><small>{{ doc.descricao }}</small>{% endif %}</td>
+        <td class="text-center">{{ doc.quantidade | int }}</td>
+        <td class="text-center">{{ frappe.utils.fmt_money(doc.valor_unitario, currency="BRL") }}</td>
+        <td class="text-right">{{ frappe.utils.fmt_money(doc.valor_total, currency="BRL") }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Summary Fields -->
+  <ul class="summary-list">
+    <li>Valor do Frete:
+      <span class="value">
+        {% if orc_doc and orc_doc.frete and orc_doc.frete > 0 %}
+          {{ frappe.utils.fmt_money(orc_doc.frete, currency="BRL") }}
+        {% else %}
+          A calcular
+        {% endif %}
+      </span>
+    </li>
+    <li>Valor Total Do Pedido:
+      <span class="value">{{ frappe.utils.fmt_money(doc.valor_total, currency="BRL") }}</span>
+    </li>
+    <li>Endere&ccedil;o De Entrega:
+      <span class="value">
+        {% if delivery_address %}
+          {{ delivery_address }}
+        {% else %}
+          &mdash;
+        {% endif %}
+      </span>
+    </li>
+    <li>Data De Confirma&ccedil;&atilde;o:
+      <span class="value">
+        {% if doc.data_confirmacao %}
+          {{ frappe.utils.formatdate(doc.data_confirmacao, "dd/MM/yyyy") }}
+        {% else %}
+          &mdash;
+        {% endif %}
+      </span>
+    </li>
+    <li>Data De Entrega:
+      <span class="value">
+        {% if doc.data_confirmacao %}
+          {{ frappe.utils.formatdate(frappe.utils.add_days(doc.data_confirmacao, 21), "dd/MM/yyyy") }}
+          (estimativa)
+        {% else %}
+          &mdash;
+        {% endif %}
+      </span>
+    </li>
+  </ul>
+
+  <!-- OBS -->
+  <div class="obs-box">
+    <p><strong>OBS:</strong></p>
+    <p>Entrega de entrega at&eacute; 15 dias corridos, sendo o pagamento a vista.</p>
+    <p>Em caso de cancelamento ap&oacute;s o in&iacute;cio da produ&ccedil;&atilde;o, ser&aacute; faturado 100% do valor total do
+       pedido, conforme clausulas abaixo</p>
+    {% if doc.observacoes %}
+      <p>{{ doc.observacoes }}</p>
+    {% endif %}
+  </div>
+
+  <!-- CLAUSULAS DO CONTRATO -->
+
+  <div class="clausulas-title">CL&Aacute;USULAS DO OBJETO DO CONTRATO:</div>
+
+  <p class="clause-heading">1. DO OBJETO DO CONTRATO</p>
+  <p class="clause-text">
+    1.1. O presente contrato tem por objeto a compra e venda de produtos personalizados com a
+    logomarca ou informa&ccedil;&otilde;es especificadas pela CONTRATANTE, conforme descrito no pedido aprovado.
+  </p>
+
+  <p class="clause-heading">2. DO PRAZO DE ENTREGA E RESPONSABILIDADE PELO TRANSPORTE</p>
+  <p class="clause-text">
+    2.1. O prazo de entrega informado durante o procedimento de compra considera estoque,
+    regi&atilde;o, processo de emiss&atilde;o de nota fiscal e prepara&ccedil;&atilde;o do produto.
+  </p>
+  <p class="clause-text">
+    2.2. O frete ser&aacute; calculado com base no local de entrega, peso e dimens&otilde;es do produto.
+  </p>
+  <p class="clause-text">
+    2.3. A CONTRATADA n&atilde;o se responsabiliza por atrasos causados pela transportadora. Em caso de
+    reten&ccedil;&atilde;o de mercadorias na SEFAZ por pend&ecirc;ncias do CONTRATANTE, caber&aacute; a este realizar
+    os procedimentos necess&aacute;rios para libera&ccedil;&atilde;o.
+  </p>
+
+  <p class="clause-heading">3. DA PRODU&Ccedil;&Atilde;O E PERSONALIZA&Ccedil;&Atilde;O DOS PRODUTOS</p>
+  <p class="clause-text">
+    3.1. Uma vez aprovado o pedido, n&atilde;o ser&aacute; poss&iacute;vel cancel&aacute;-lo, devido &agrave; natureza personalizada
+    dos produtos, a qual a empresa n&atilde;o poder&aacute; revender o mesmo produto por ser personalizado.
+  </p>
+  <p class="clause-text">
+    3.2. As cores do pantone podem variar em processos como transferir, grava&ccedil;&atilde;o digital e
+    sublima&ccedil;&atilde;o, apresentando tonalidade aproximada.
+  </p>
+  <p class="clause-text">
+    3.3. Produtos personalizados, nome a nome, devem ser acompanhados de lista enviada em
+    formato Word, com a fonte especificada. N&atilde;o h&aacute; altera&ccedil;&atilde;o na grafia, mesmo em casos de erros evidentes.
+  </p>
+  <p class="clause-text">
+    3.4. Caso haja desist&ecirc;ncia do CONTRATANTE ap&oacute;s o in&iacute;cio da produ&ccedil;&atilde;o, ser&aacute; obrigat&oacute;rio o
+    pagamento integral do pedido.
+  </p>
+  <p class="clause-text">
+    3.5. A CONTRATADA se compromete a seguir as especifica&ccedil;&otilde;es fornecidas pela CONTRATANTE,
+    desde que tecnicamente vi&aacute;veis. Caso alguma especifica&ccedil;&atilde;o n&atilde;o seja poss&iacute;vel, a CONTRATANTE
+    ser&aacute; informada para ajustes ou substitui&ccedil;&atilde;o de materiais.
+  </p>
+
+  <div class="page-break"></div>
+
+  <p class="clause-heading">4. DAS FORMAS DE PAGAMENTO</p>
+  <p class="clause-text">
+    4.1. O pagamento poder&aacute; ser realizado &agrave; vista ou de forma parcelada, conforme as op&ccedil;&otilde;es abaixo:
+  </p>
+  <p class="clause-text">
+    <strong>Pagamento &agrave; vista:</strong> boleto banc&aacute;rio, d&eacute;bito em conta ou cart&atilde;o de cr&eacute;dito, com acr&eacute;scimo de 5%.
+  </p>
+  <p class="clause-text">
+    <strong>Pagamento parcelado:</strong> boleto banc&aacute;rio.
+  </p>
+  <p class="clause-text">
+    4.2. A confirma&ccedil;&atilde;o do pagamento &eacute; condi&ccedil;&atilde;o indispens&aacute;vel para in&iacute;cio da produ&ccedil;&atilde;o.
+  </p>
+  <p class="clause-text">
+    4.3. Em caso de inadimpl&ecirc;ncia, incidir&atilde;o multa de 20% (vinte por cento) sobre o valor devido,
+    juros de mora de 1% (um por cento) ao m&ecirc;s e corre&ccedil;&atilde;o monet&aacute;ria pelo &iacute;ndice do IPCA.
+  </p>
+  <p class="clause-text">
+    4.4. Em caso de n&atilde;o pagamento dos produtos j&aacute; confeccionados, a CONTRATADA poder&aacute;:
+  </p>
+  <p class="clause-text clause-subitem">
+    a) Entrar com a&ccedil;&atilde;o judicial para cobran&ccedil;a do valor devido na nota fiscal;
+  </p>
+  <p class="clause-text clause-subitem">
+    b) Exigir o pagamento do valor do produto confeccionado, acrescido dos custos com
+    transportadora ou correios, corrigidos com juros de mora de 1% (um por cento) ao m&ecirc;s e multa
+    de 20% (vinte por cento) sobre o valor total;
+  </p>
+  <p class="clause-text clause-subitem">
+    c) Requerer o pagamento de honor&aacute;rios advocat&iacute;cios, no percentual de 15% (quinze por cento)
+    sobre o montante devido.
+  </p>
+  <p class="clause-text clause-subitem">
+    d) Exigir os pagamentos das custas judiciais.
+  </p>
+
+  <p class="clause-heading">5. DA ALTERA&Ccedil;&Atilde;O DE PEDIDO E ENTREGA</p>
+  <p class="clause-text">
+    5.1. Ap&oacute;s a finaliza&ccedil;&atilde;o do pedido, n&atilde;o ser&aacute; poss&iacute;vel alterar a forma de pagamento, endere&ccedil;o
+    de entrega ou solicitar prioridade na entrega.
+  </p>
+  <p class="clause-text">
+    5.2. Caso o CONTRATANTE solicite modifica&ccedil;&otilde;es antes do in&iacute;cio da produ&ccedil;&atilde;o, estas estar&atilde;o
+    sujeitas &agrave; aprova&ccedil;&atilde;o e revis&atilde;o dos custos, podendo implicar no ajuste de valores e prazos.
+  </p>
+
+  <p class="clause-heading">6. DO CASO FORTUITO E FOR&Ccedil;A MAIOR</p>
+  <p class="clause-text">
+    6.1. Nenhuma das partes ser&aacute; responsabilizada por falhas ou atrasos decorrentes de eventos
+    de caso fortuito ou for&ccedil;a maior, conforme disposto no art. 393 do C&oacute;digo Civil Brasileiro.
+  </p>
+
+  <p class="clause-heading">7. DAS OBRIGA&Ccedil;&Otilde;ES DAS PARTES</p>
+
+  <p class="clause-text"><strong>7.1. Obriga&ccedil;&otilde;es da CONTRATADA:</strong></p>
+  <ul class="clause-list">
+    <li>Produzir os produtos conforme as especifica&ccedil;&otilde;es aprovadas no pedido.</li>
+    <li>Informar ao CONTRATANTE qualquer impossibilidade de cumprimento das especifica&ccedil;&otilde;es acordadas.</li>
+    <li>Garantir a qualidade dos materiais utilizados.</li>
+    <li>Disponibilizar suporte para esclarecimento de d&uacute;vidas durante o processo de compra e produ&ccedil;&atilde;o.</li>
+  </ul>
+
+  <p class="clause-text"><strong>7.2. Obriga&ccedil;&otilde;es da CONTRATANTE:</strong></p>
+  <ul class="clause-list">
+    <li>Fornecer informa&ccedil;&otilde;es claras e precisas sobre os dados de personaliza&ccedil;&atilde;o.</li>
+    <li>Realizar o pagamento nos termos e prazos acordados.</li>
+    <li>Revisar cuidadosamente o pedido antes da aprova&ccedil;&atilde;o final, estando ciente de que n&atilde;o
+        ser&atilde;o realizadas altera&ccedil;&otilde;es ap&oacute;s este momento.</li>
+    <li>Garantir que os dados fornecidos est&atilde;o corretos e completos, especialmente em rela&ccedil;&atilde;o
+        &agrave; grafia e formata&ccedil;&atilde;o.</li>
+  </ul>
+
+  <p class="clause-heading">8. DOS DADOS BANC&Aacute;RIOS DA CONTRATADA</p>
+  <p class="clause-text">
+    {% if company_doc %}{{ company_doc.name | upper }}{% endif %},
+    CNPJ: {{ company_doc.tax_id if company_doc else "&mdash;" }}:
+  </p>
+  <p class="clause-text clause-subitem">
+    1. Banco 237 &ndash; Bradesco &ndash; ag&ecirc;ncia 2622 Conta Corrente: 39191 -3
+    Chave Pix: 31.201.696/0001-48, Email: financeiro@qibrindes.com.br
+  </p>
+  <p class="clause-text clause-subitem">
+    2. Banco 336 banco C6 S.A. &ndash; ag&ecirc;ncia 0001 &ndash; conta corrente 32979583-0.
+  </p>
+  <p class="clause-text clause-subitem">
+    3. Chave pix: financeiro@qibrindes.com.br
+  </p>
+
+  <p class="clause-heading">9. DO FORO</p>
+  <p class="clause-text">
+    9.1. As partes elegem o foro da comarca de
+    {% if company_addr %}{{ company_addr.city }}{% else %}Santana{% endif %},
+    S&atilde;o Paulo para dirimir quaisquer d&uacute;vidas oriundas deste contrato, com ren&uacute;ncia a qualquer outro,
+    por mais privilegiado que seja.
+  </p>
+
+  <!-- SIGNATURES -->
+  <div class="signature-section">
+    <p class="signature-date">
+      local e data:
+      {% if company_addr %}{{ company_addr.city }}{% else %}S&atilde;o Paulo{% endif %},
+      {% if doc.data_confirmacao %}
+        {{ frappe.utils.formatdate(doc.data_confirmacao, "d 'de' MMMM 'de' yyyy") }}.
+      {% else %}
+        _________________.
+      {% endif %}
+    </p>
+
+    <div class="signature-block">
+      <p class="label">CONTRATADA: {{ company_doc.name if company_doc else "" }}</p>
+      <div class="signature-line">Representante:</div>
+    </div>
+
+    <div class="signature-block">
+      <p class="label">CONTRATANTE:</p>
+      <div class="signature-line">Representante: {{ doc.cliente }}</div>
+    </div>
+  </div>
+
+  <!-- PAGE FOOTER -->
+  <div class="page-footer">
+    <a href="http://www.qibrindes.com.br">www.qibrindes.com.br</a> |
+    fone: 11 2476 - 6065 |
+    contato@qibrindes.com.br
+  </div>
+
 </div>
