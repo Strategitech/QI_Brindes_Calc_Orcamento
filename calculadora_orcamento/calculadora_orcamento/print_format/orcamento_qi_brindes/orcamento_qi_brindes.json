@@ -1,0 +1,9 @@
+{
+ "name": "Orcamento QI Brindes",
+ "doctype": "Print Format",
+ "doc_type": "Calculadora Orcamento",
+ "module": "Calculadora Orcamento",
+ "print_format_type": "Jinja",
+ "standard": "Yes",
+ "default_print_language": "pt-BR"
+}
