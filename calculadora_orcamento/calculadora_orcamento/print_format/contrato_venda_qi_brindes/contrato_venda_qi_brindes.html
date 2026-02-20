@@ -40,15 +40,15 @@
 
 {# Build delivery address string from doc.endereco_* fields #}
 {% set delivery_parts = [] %}
-{% if doc.endereco_logradouro %}{% do delivery_parts.append(doc.endereco_logradouro) %}{% endif %}
-{% if doc.endereco_complemento %}{% do delivery_parts.append(doc.endereco_complemento) %}{% endif %}
-{% if doc.endereco_bairro %}{% do delivery_parts.append(doc.endereco_bairro) %}{% endif %}
+{% if doc.endereco_logradouro %}{% set _ = delivery_parts.append(doc.endereco_logradouro) %}{% endif %}
+{% if doc.endereco_complemento %}{% set _ = delivery_parts.append(doc.endereco_complemento) %}{% endif %}
+{% if doc.endereco_bairro %}{% set _ = delivery_parts.append(doc.endereco_bairro) %}{% endif %}
 {% if doc.endereco_cidade and doc.endereco_estado %}
-  {% do delivery_parts.append(doc.endereco_cidade ~ " - " ~ doc.endereco_estado) %}
+  {% set _ = delivery_parts.append(doc.endereco_cidade ~ " - " ~ doc.endereco_estado) %}
 {% elif doc.endereco_cidade %}
-  {% do delivery_parts.append(doc.endereco_cidade) %}
+  {% set _ = delivery_parts.append(doc.endereco_cidade) %}
 {% endif %}
-{% if doc.endereco_cep %}{% do delivery_parts.append("CEP " ~ doc.endereco_cep) %}{% endif %}
+{% if doc.endereco_cep %}{% set _ = delivery_parts.append("CEP " ~ doc.endereco_cep) %}{% endif %}
 {% set delivery_address = delivery_parts | join(", ") if delivery_parts else None %}
 
 {# Customer address for CONTRATANTE section (from Customer doc) #}

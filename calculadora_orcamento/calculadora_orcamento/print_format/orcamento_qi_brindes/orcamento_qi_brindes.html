@@ -37,13 +37,13 @@
 {# Resolve product display name: item_name (never item_code) #}
 {% set product_name = item_doc.item_name if item_doc else "" %}
 
-{# Collect engraving methods from child table #}
+{# Collect unique engraving methods from child table #}
 {% set gravacao_metodos = [] %}
 {% for row in doc.gravacoes %}
   {% if row.catalogo_gravacao %}
     {% set metodo = frappe.db.get_value("Catalogo Gravacao", row.catalogo_gravacao, "metodo_gravacao") %}
     {% if metodo and metodo not in gravacao_metodos %}
-      {% do gravacao_metodos.append(metodo) %}
+      {% set _ = gravacao_metodos.append(metodo) %}
     {% endif %}
   {% endif %}
 {% endfor %}
