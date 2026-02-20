@@ -29,9 +29,9 @@
 {% set orc_doc = frappe.get_doc("Calculadora Orcamento", doc.orcamento) if doc.orcamento else None %}
 {% set customer_doc = frappe.get_doc("Customer", orc_doc.nome) if orc_doc and orc_doc.nome else None %}
 
-{% set company_name = frappe.defaults.get_defaults().company %}
+{% set company_name = frappe.db.get_default("company") %}
 {% set company_doc = frappe.get_doc("Company", company_name) if company_name else None %}
-{% set company_address_name = frappe.get_value("Dynamic Link", {
+{% set company_address_name = frappe.db.get_value("Dynamic Link", {
     "link_doctype": "Company",
     "link_name": company_name,
     "parenttype": "Address"
@@ -52,7 +52,7 @@
 {% set delivery_address = delivery_parts | join(", ") if delivery_parts else None %}
 
 {# Customer address for CONTRATANTE section (from Customer doc) #}
-{% set customer_address_name = frappe.get_value("Dynamic Link", {
+{% set customer_address_name = frappe.db.get_value("Dynamic Link", {
     "link_doctype": "Customer",
     "link_name": orc_doc.nome,
     "parenttype": "Address"

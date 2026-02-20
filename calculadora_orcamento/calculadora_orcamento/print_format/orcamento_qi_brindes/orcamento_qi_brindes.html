@@ -28,7 +28,7 @@
 
 {% set customer_doc = frappe.get_doc("Customer", doc.nome) if doc.nome else None %}
 {% set item_doc = frappe.get_doc("Item", doc.item) if doc.item else None %}
-{% set company_name = frappe.defaults.get_defaults().company %}
+{% set company_name = frappe.db.get_default("company") %}
 {% set company_doc = frappe.get_doc("Company", company_name) if company_name else None %}
 
 {# Resolve product image: user-selected first, then Item.image fallback #}
