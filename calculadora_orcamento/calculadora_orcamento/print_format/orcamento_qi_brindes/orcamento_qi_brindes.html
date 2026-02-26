@@ -1,43 +1,11 @@
-{#
-  ERPNext Print Format: Orçamento QI Brindes
-  DocType: Calculadora Orcamento
-
-  KEY DIFFERENCES FROM STANDARD QUOTATION:
-  - Single item per document (no items child table)
-  - Item linked via doc.item (Link → Item)
-  - Customer linked via doc.nome (Link → Customer)
-  - Final prices in doc.valor_final_unitario / doc.valor_final_total
-  - Frete is a Currency field (doc.frete), not a check
-  - Internal fields (commission, BV, tax breakdown) are EXCLUDED from print
-
-  FIELD MAPPING:
-  ─────────────────────────────────────────────
-  doc.nome                → Customer link
-  doc.telefone_whatsapp   → Customer phone
-  doc.item                → Item link
-  doc.imagem_produto      → User-selected product image
-  doc.descrição           → Item description (read-only, fetch_from item.description)
-  doc.quantidade          → Qty
-  doc.custo_base          → Base cost (internal — not shown)
-  doc.valor_final_unitario → Client-facing unit price
-  doc.valor_final_total    → Client-facing total
-  doc.frete               → Shipping cost
-  doc.gravacoes           → Child table of engravings
-  doc.total_gravacao      → Sum of engraving costs
-#}
-
 {% set customer_doc = frappe.get_doc("Customer", doc.nome) if doc.nome else None %}
 {% set item_doc = frappe.get_doc("Item", doc.item) if doc.item else None %}
-{% set company_name = frappe.db.get_default("company") %}
+{% set company_name = frappe.db.get_single_value("Global Defaults", "default_company") %}
 {% set company_doc = frappe.get_doc("Company", company_name) if company_name else None %}
-
-{# Resolve product image: user-selected first, then Item.image fallback #}
 {% set product_image = doc.imagem_produto or (item_doc.image if item_doc else None) %}
+{% set product_name = item_doc.item_name if item_doc and item_doc.item_name else (doc.item or "") %}
+{% set descricao = doc.get("descri\u00e7\u00e3o") or "" %}
 
-{# Resolve product display name: item_name (never item_code) #}
-{% set product_name = item_doc.item_name if item_doc else "" %}
-
-{# Collect unique engraving methods from child table #}
 {% set gravacao_metodos = [] %}
 {% for row in doc.gravacoes %}
   {% if row.catalogo_gravacao %}
@@ -51,179 +19,182 @@
 <style>
   @page {
     size: A4;
-    margin: 15mm 20mm 25mm 20mm;
+    margin: 14mm 12mm 16mm 12mm;
   }
 
   body {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    font-size: 10pt;
-    color: #333;
-    line-height: 1.5;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 11pt;
+    color: #111;
+    line-height: 1.35;
   }
 
-  .orcamento-wrapper {
+  .quote-page {
     position: relative;
-    width: 100%;
-    max-width: 700px;
-    margin: 0 auto;
+    min-height: 100%;
+  }
+
+  .brand-curve {
+    position: absolute;
+    top: -18mm;
+    right: -12mm;
+    width: 220mm;
+    height: 40mm;
+    border-bottom-left-radius: 210mm 40mm;
+    border-bottom-right-radius: 0;
+    background: linear-gradient(90deg, #ececf3 0%, #ececf3 72%, #223985 73%, #223985 85%, #2f2f8e 100%);
+    z-index: 0;
   }
 
   .watermark {
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 0.06;
+    transform: translate(-50%, -44%);
+    opacity: 0.1;
     z-index: -1;
     pointer-events: none;
   }
 
   .watermark img {
-    max-width: 500px;
-    max-height: 500px;
+    width: 170mm;
+    max-width: 90vw;
   }
 
-  .header-section {
+  .header {
+    position: relative;
+    z-index: 1;
+    margin-top: 2mm;
+  }
+
+  .logo {
+    max-height: 34mm;
+    display: block;
+    margin: 0 0 5mm 0;
+  }
+
+  .company-strip {
     text-align: center;
-    margin-bottom: 20px;
-  }
-
-  .header-section img.company-logo {
-    max-height: 90px;
-    margin-bottom: 10px;
-  }
-
-  .company-info {
-    font-size: 9pt;
-    color: #555;
-    background: #f8f8f8;
-    padding: 8px 15px;
-    border-radius: 3px;
-    margin-bottom: 20px;
-    text-align: center;
-  }
-
-  .client-section {
-    margin-bottom: 15px;
-  }
-
-  .client-label {
+    font-size: 9.2pt;
     font-weight: 700;
-    font-size: 10pt;
-    color: #222;
+    letter-spacing: 0.1px;
+    margin: 0 0 8mm 0;
   }
 
-  .date-line {
+  .meta-row {
+    margin-bottom: 6mm;
+  }
+
+  .requestor {
+    font-size: 12pt;
+    font-weight: 700;
+    margin-bottom: 6mm;
+  }
+
+  .quote-date {
     text-align: right;
-    font-size: 10pt;
-    color: #444;
-    margin-bottom: 10px;
+    font-size: 11pt;
+    font-weight: 700;
+    margin-bottom: 6mm;
   }
 
-  .greeting {
-    font-size: 10pt;
-    color: #444;
-    margin-bottom: 20px;
+  .intro {
+    font-size: 11.5pt;
+    font-weight: 700;
+    margin-bottom: 9mm;
   }
 
-  .items-table {
+  .quote-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
+    table-layout: fixed;
+    margin-bottom: 8mm;
   }
 
-  .items-table thead th {
-    background-color: #E87722;
-    color: #fff;
-    padding: 10px 8px;
-    font-size: 9pt;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+  .quote-table th,
+  .quote-table td {
+    border: 1px solid #2a2a2a;
+    padding: 4px 6px;
+    vertical-align: top;
+  }
+
+  .quote-table thead th {
+    background: #ececec;
+    font-style: italic;
+    font-size: 11pt;
+    font-weight: 400;
     text-align: center;
-    border: 1px solid #d06a1a;
   }
 
-  .items-table thead th:first-child {
-    text-align: left;
-    width: 45%;
+  .quote-table thead th:first-child {
+    width: 52%;
   }
 
-  .items-table tbody td {
-    padding: 12px 8px;
-    border: 1px solid #ddd;
-    vertical-align: middle;
-    font-size: 9.5pt;
+  .quote-table thead th:nth-child(2) {
+    width: 18%;
   }
 
-  .item-image {
-    max-width: 80px;
-    max-height: 80px;
+  .quote-table thead th:nth-child(3),
+  .quote-table thead th:nth-child(4) {
+    width: 15%;
+  }
+
+  .product-cell {
+    min-height: 120px;
+  }
+
+  .product-image {
     display: block;
-    margin: 0 auto 6px auto;
+    max-width: 36mm;
+    max-height: 30mm;
+    margin: 0 auto 3mm auto;
   }
 
-  .item-name {
-    font-weight: 600;
-    font-size: 9.5pt;
-    margin-bottom: 4px;
+  .product-text {
+    text-align: center;
+    font-size: 10pt;
+    font-style: italic;
+    line-height: 1.2;
   }
 
-  .item-description {
-    font-size: 9pt;
-    color: #555;
+  .product-gravacao {
+    display: block;
+    margin-top: 1mm;
+  }
+
+  .center {
+    text-align: center;
+    vertical-align: middle;
+    font-size: 15pt;
     font-style: italic;
   }
 
-  .item-gravacao {
-    font-size: 8.5pt;
-    color: #E87722;
-    margin-top: 4px;
+  .money {
+    text-align: left;
+    vertical-align: middle;
+    font-size: 15pt;
+    font-style: italic;
+    white-space: nowrap;
   }
 
-  .text-center { text-align: center; }
-  .text-right { text-align: right; }
-
-  .footer-notes {
-    margin-top: 25px;
-    padding: 12px 15px;
-    background: #fdf6f0;
-    border-left: 4px solid #E87722;
-    border-radius: 0 3px 3px 0;
+  .notes {
+    margin-left: 12mm;
+    margin-top: 8mm;
   }
 
-  .footer-notes p {
-    margin: 4px 0;
-    font-size: 10pt;
-    font-weight: 600;
-    color: #333;
-  }
-
-  .footer-notes .highlight {
-    color: #E87722;
+  .notes p {
+    margin: 0 0 3mm 0;
+    font-size: 10.6pt;
     font-weight: 700;
   }
 
-  .page-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 8pt;
-    color: #E87722;
-    border-top: 2px solid #E87722;
-    padding-top: 6px;
-  }
-
-  .page-footer a {
-    color: #E87722;
-    text-decoration: none;
-    font-weight: 600;
+  .notes .frete {
+    text-transform: uppercase;
   }
 </style>
 
-<div class="orcamento-wrapper">
+<div class="quote-page">
+  <div class="brand-curve"></div>
 
   {% if company_doc and company_doc.company_logo %}
   <div class="watermark">
@@ -231,88 +202,65 @@
   </div>
   {% endif %}
 
-  <!-- HEADER -->
-  <div class="header-section">
+  <div class="header">
     {% if company_doc and company_doc.company_logo %}
-      <img class="company-logo" src="{{ company_doc.company_logo }}" alt="{{ company_doc.name }}">
+      <img class="logo" src="{{ company_doc.company_logo }}" alt="{{ company_doc.name }}">
     {% elif company_doc %}
-      <h2 style="color: #E87722; margin: 0;">{{ company_doc.name }}</h2>
+      <h2 style="margin: 0 0 5mm 0;">{{ company_doc.name }}</h2>
     {% endif %}
+
+    <div class="company-strip">
+      {% if company_doc %}
+        {{ company_doc.name | upper }}
+        {% if company_doc.tax_id %} CNPJ: {{ company_doc.tax_id }}{% endif %}
+        {% if company_doc.custom_inscricao_estadual %} INSCRICAO ESTADUAL: {{ company_doc.custom_inscricao_estadual }}{% endif %}
+      {% endif %}
+    </div>
+
+    <div class="meta-row">
+      <div class="requestor">EMPRESA/ SOLICITANTE: {{ customer_doc.customer_name if customer_doc else (doc.nome or "") }}</div>
+      <div class="quote-date">Sao Paulo, {{ frappe.utils.formatdate(doc.creation, "d 'de' MMMM 'de' yyyy") }}.</div>
+    </div>
+
+    <div class="intro">Agradecemos sua solicitacao de orcamento, segue nossa cotacao abaixo:</div>
   </div>
 
-  {% if company_doc %}
-  <div class="company-info">
-    {{ company_doc.name | upper }}
-    {% if company_doc.tax_id %} CNPJ: {{ company_doc.tax_id }}{% endif %}
-    {% if company_doc.custom_inscricao_estadual %} INSCRI&Ccedil;&Atilde;O ESTADUAL: {{ company_doc.custom_inscricao_estadual }}{% endif %}
-  </div>
-  {% endif %}
-
-  <!-- CLIENT & DATE -->
-  <div class="client-section">
-    <span class="client-label">EMPRESA/ SOLICITANTE:</span>
-    {{ customer_doc.customer_name if customer_doc else doc.nome }}
-  </div>
-
-  <div class="date-line">
-    {{ frappe.utils.formatdate(doc.creation, "d 'de' MMMM 'de' yyyy") }}
-  </div>
-
-  <div class="greeting">
-    Agradecemos sua solicita&ccedil;&atilde;o de or&ccedil;amento, segue nossa cota&ccedil;&atilde;o abaixo:
-  </div>
-
-  <!-- SINGLE-ITEM TABLE -->
-  <table class="items-table">
+  <table class="quote-table">
     <thead>
       <tr>
         <th>Produto</th>
         <th>Quantidade</th>
-        <th>Valor Unit&aacute;rio</th>
-        <th>Valor Total</th>
+        <th>Valor unitario</th>
+        <th>Valor total</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td>
+        <td class="product-cell">
           {% if product_image %}
-            <img class="item-image" src="{{ product_image }}" alt="">
+            <img class="product-image" src="{{ product_image }}" alt="">
           {% endif %}
-          {% if product_name %}
-            <div class="item-name">{{ product_name }}</div>
-          {% endif %}
-          {% set descricao = doc.get("descri\u00e7\u00e3o") or "" %}
-          {% if descricao %}
-            <div class="item-description">{{ descricao }}</div>
-          {% endif %}
-          {% if gravacao_metodos %}
-            <div class="item-gravacao">Grava&ccedil;&atilde;o: {{ gravacao_metodos | join(", ") }}</div>
-          {% endif %}
+          <div class="product-text">
+            {{ (product_name ~ (", " ~ descricao if descricao else "")) | replace("\n", " ") }}
+            {% if gravacao_metodos %}
+              <span class="product-gravacao">personalizada a {{ gravacao_metodos | join(", ") | lower }}</span>
+            {% endif %}
+          </div>
         </td>
-        <td class="text-center">{{ doc.quantidade | int }}</td>
-        <td class="text-center">{{ frappe.utils.fmt_money(doc.valor_final_unitario, currency="BRL") }}</td>
-        <td class="text-right">{{ frappe.utils.fmt_money(doc.valor_final_total, currency="BRL") }}</td>
+        <td class="center">{{ doc.quantidade | int }}</td>
+        <td class="money">{{ frappe.utils.fmt_money(doc.valor_final_unitario, currency="BRL") }}</td>
+        <td class="money">{{ frappe.utils.fmt_money(doc.valor_final_total, currency="BRL") }}</td>
       </tr>
     </tbody>
   </table>
 
-  <!-- FOOTER NOTES -->
-  <div class="footer-notes">
+  <div class="notes">
     {% if doc.frete and doc.frete > 0 %}
-      <p>FRETE: {{ frappe.utils.fmt_money(doc.frete, currency="BRL") }}</p>
+      <p class="frete">FRETE: {{ frappe.utils.fmt_money(doc.frete, currency="BRL") }}</p>
     {% else %}
-      <p class="highlight">FRETE N&Atilde;O INCLUSO</p>
+      <p class="frete">FRETE NAO INCLUSO</p>
     {% endif %}
-
-    <p>Validade do or&ccedil;amento 10 dias</p>
-    <p>Prazo de entrega 15 dias &uacute;teis</p>
+    <p>Validade do orcamento 10 dias</p>
+    <p>Prazo de entrega 15 dias uteis</p>
   </div>
-
-  <!-- PAGE FOOTER -->
-  <div class="page-footer">
-    <a href="http://www.qibrindes.com.br">www.qibrindes.com.br</a> |
-    fone: 11 2476 - 6065 |
-    contato@qibrindes.com.br
-  </div>
-
 </div>
