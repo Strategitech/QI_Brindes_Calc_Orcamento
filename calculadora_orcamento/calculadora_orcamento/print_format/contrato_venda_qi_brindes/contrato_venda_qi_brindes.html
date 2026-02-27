@@ -29,7 +29,6 @@
 {% if doc.endereco_cep %}{% set _ = delivery_parts.append("CEP " ~ doc.endereco_cep) %}{% endif %}
 {% set delivery_address = delivery_parts | join(", ") if delivery_parts else None %}
 
-{% set item_code = orc_doc.item if orc_doc and orc_doc.item else "" %}
 {% set estimated_delivery = frappe.utils.add_days(doc.data_confirmacao, 15) if doc.data_confirmacao else None %}
 
 <style>
@@ -121,11 +120,10 @@
     text-transform: uppercase;
   }
 
-  .contract-table th:nth-child(1) { width: 30%; }
-  .contract-table th:nth-child(2) { width: 16%; }
-  .contract-table th:nth-child(3) { width: 15%; }
+  .contract-table th:nth-child(1) { width: 45%; }
+  .contract-table th:nth-child(2) { width: 17%; }
+  .contract-table th:nth-child(3) { width: 19%; }
   .contract-table th:nth-child(4) { width: 19%; }
-  .contract-table th:nth-child(5) { width: 20%; }
 
   .contract-table td {
     min-height: 28mm;
@@ -287,7 +285,6 @@
     <thead>
       <tr>
         <th>Produto</th>
-        <th>Codigo</th>
         <th>Quantidade</th>
         <th>Valor Unitario</th>
         <th>Valor Total</th>
@@ -296,7 +293,6 @@
     <tbody>
       <tr>
         <td>{{ doc.item }}{% if doc.descricao %}<br><small>{{ doc.descricao }}</small>{% endif %}</td>
-        <td class="center">{{ item_code }}</td>
         <td class="center">{{ doc.quantidade | int }}</td>
         <td class="money">{{ frappe.utils.fmt_money(doc.valor_unitario, currency="BRL") }}</td>
         <td class="money">{{ frappe.utils.fmt_money(doc.valor_total, currency="BRL") }}</td>
@@ -411,6 +407,14 @@
   </div>
 
   <div class="footer">
+    {% if company_doc %}
+      <div>
+        <strong>{{ company_doc.name }}</strong>
+        {% if company_doc.tax_id %} | CNPJ: {{ company_doc.tax_id }}{% endif %}
+        {% if company_doc.custom_inscricao_estadual %} | IE: {{ company_doc.custom_inscricao_estadual }}{% endif %}
+        {% if company_doc.custom_ccm %} | CCM: {{ company_doc.custom_ccm }}{% endif %}
+      </div>
+    {% endif %}
     <strong>www.qibrindes.com.br</strong> | fone: 11 2476 - 6065 | contato@qibrindes.com.br
   </div>
 </div>

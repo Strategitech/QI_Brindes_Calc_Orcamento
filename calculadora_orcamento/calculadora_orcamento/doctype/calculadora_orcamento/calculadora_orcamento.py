@@ -198,13 +198,15 @@ def make_delivery_note(source_name):
 @frappe.whitelist()
 def make_confirmacao_pedido(source_name):
     doc = frappe.get_doc("Calculadora Orcamento", source_name)
+    item_name = frappe.db.get_value("Item", doc.item, "item_name") if doc.item else None
+    item_description = frappe.db.get_value("Item", doc.item, "description") if doc.item else None
 
     conf = frappe.new_doc("Confirmacao Pedido")
     conf.orcamento = doc.name
     conf.cliente = doc.nome
     conf.telefone = doc.telefone_whatsapp
-    conf.item = frappe.db.get_value("Item", doc.item, "item_name") or doc.item
-    conf.descricao = doc.get("descrição") or ""
+    conf.item = item_name or (doc.get("descrição") or doc.get("descricao") or "Produto personalizado")
+    conf.descricao = doc.get("descrição") or doc.get("descricao") or item_description or ""
     conf.quantidade = doc.quantidade
     conf.valor_unitario = doc.valor_final_unitario
     conf.valor_total = doc.valor_final_total
@@ -216,6 +218,7 @@ def make_confirmacao_pedido(source_name):
         addr = frappe.get_doc("Address", address_name)
         conf.endereco_logradouro = addr.address_line1
         conf.endereco_complemento = addr.address_line2
+        conf.endereco_bairro = addr.county
         conf.endereco_cidade = addr.city
         conf.endereco_estado = addr.state
         conf.endereco_cep = addr.pincode
