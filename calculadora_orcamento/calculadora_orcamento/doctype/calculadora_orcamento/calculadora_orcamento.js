@@ -1,10 +1,90 @@
 // Copyright (c) 2025, Strategitech and contributors
 // For license information, please see license.txt
 
-function open_image_picker(frm) {
-	if (!frm.doc.item) return;
+const IMAGE_FILE_REGEX = /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i;
 
-	Promise.all([
+function is_image_url(url) {
+	if (!url) return false;
+	if (/^data:image\//i.test(url)) return true;
+	if (frappe.utils && typeof frappe.utils.is_image_file === "function") {
+		return frappe.utils.is_image_file(url);
+	}
+	return IMAGE_FILE_REGEX.test(url);
+}
+
+function add_image_url(target, raw_value, allow_non_image = false) {
+	if (!raw_value) return;
+	String(raw_value)
+		.split(/[\n;]+/)
+		.map((value) => value.trim())
+		.filter(Boolean)
+		.forEach((value) => {
+			if (allow_non_image || is_image_url(value)) {
+				target.add(value);
+			}
+		});
+}
+
+function ensure_image_picker_styles() {
+	if (document.getElementById("qi-image-picker-style")) return;
+
+	const style = document.createElement("style");
+	style.id = "qi-image-picker-style";
+	style.textContent = `
+		[data-fieldname="imagem_produto"] .control-input-wrapper,
+		[data-fieldname="imagem_produto"] .control-value,
+		[data-fieldname="imagem_produto"] .attached-file,
+		[data-fieldname="imagem_produto"] .btn-attach,
+		[data-fieldname="imagem_produto"] .attached-file-link {
+			display: none !important;
+		}
+
+		[data-fieldname="imagem_produto"] .qi-image-picker {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			margin-top: 8px;
+		}
+
+		[data-fieldname="imagem_produto"] .qi-image-option {
+			border: 2px solid transparent;
+			border-radius: 6px;
+			padding: 3px;
+			background: #fff;
+			cursor: pointer;
+			line-height: 0;
+		}
+
+		[data-fieldname="imagem_produto"] .qi-image-option:hover {
+			border-color: #1b8fdb;
+		}
+
+		[data-fieldname="imagem_produto"] .qi-image-option.is-selected {
+			border-color: #223985;
+			box-shadow: 0 0 0 1px #223985 inset;
+		}
+
+		[data-fieldname="imagem_produto"] .qi-image-option img {
+			width: 96px;
+			height: 96px;
+			object-fit: contain;
+			display: block;
+		}
+
+		[data-fieldname="imagem_produto"] .qi-image-picker-help {
+			font-size: 12px;
+			color: #667085;
+			margin-top: 8px;
+		}
+	`;
+
+	document.head.appendChild(style);
+}
+
+function fetch_item_images(frm) {
+	if (!frm.doc.item) return Promise.resolve([]);
+
+	return Promise.all([
 		new Promise((resolve) => {
 			frappe.db.get_value("Item", frm.doc.item, "image", (r) => {
 				resolve(r && r.image ? r.image : null);
@@ -21,55 +101,86 @@ function open_image_picker(frm) {
 						is_folder: 0,
 					},
 					fields: ["file_url"],
-					limit_page_length: 50,
+					limit_page_length: 200,
 				},
 				callback: (r) => resolve(r.message || []),
 			});
 		}),
 	]).then(([main_image, files]) => {
-		let urls = new Set();
-		if (main_image) urls.add(main_image);
-		files.forEach((f) => {
-			if (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.file_url || "")) {
-				urls.add(f.file_url);
-			}
+		const urls = new Set();
+		add_image_url(urls, main_image);
+		files.forEach((file_doc) => {
+			add_image_url(urls, file_doc.file_url);
 		});
+		add_image_url(urls, frm.doc.imagem_produto, true);
+		return Array.from(urls);
+	});
+}
 
-		let images = Array.from(urls);
-		if (images.length === 0) return;
+function render_inline_image_picker(frm, images) {
+	const field = frm.fields_dict.imagem_produto;
+	if (!field || !field.$wrapper) return;
 
-		if (images.length === 1) {
-			frm.set_value("imagem_produto", images[0]);
-			return;
+	const $wrapper = field.$wrapper;
+	$wrapper.find(".qi-image-picker, .qi-image-picker-help, .btn-change-image").remove();
+
+	if (!frm.doc.item) {
+		$wrapper.append(
+			`<div class="qi-image-picker-help">${__("Selecione um item para ver as imagens disponíveis.")}</div>`
+		);
+		return;
+	}
+
+	if (!images.length) {
+		$wrapper.append(
+			`<div class="qi-image-picker-help">${__("Nenhuma imagem encontrada para este item.")}</div>`
+		);
+		return;
+	}
+
+	const selected = frm.doc.imagem_produto || "";
+	const $picker = $('<div class="qi-image-picker"></div>');
+
+	images.forEach((url) => {
+		const $button = $('<button type="button" class="qi-image-option"></button>');
+		if (url === selected) {
+			$button.addClass("is-selected");
 		}
 
-		// Multiple images — show picker dialog with thumbnails
-		let html =
-			'<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">';
-		images.forEach((url) => {
-			html +=
-				`<div class="img-pick" data-url="${url}" style="cursor:pointer;border:3px solid transparent;border-radius:6px;padding:4px;">` +
-				`<img src="${url}" style="max-width:160px;max-height:160px;object-fit:contain;border-radius:4px;">` +
-				`</div>`;
+		$button.attr("title", url);
+		$button.append($("<img>").attr("src", url).attr("alt", __("Imagem do Produto")));
+		$button.on("click", () => {
+			frm.set_value("imagem_produto", url);
 		});
-		html += "</div>";
 
-		let d = new frappe.ui.Dialog({
-			title: __("Selecione a Imagem do Produto"),
-			fields: [{ fieldtype: "HTML", options: html }],
-		});
-		d.show();
+		$picker.append($button);
+	});
 
-		d.$wrapper.find(".img-pick").on("click", function () {
-			frm.set_value("imagem_produto", $(this).data("url"));
-			d.hide();
-		});
-		d.$wrapper.find(".img-pick").on("mouseenter", function () {
-			$(this).css("border-color", "#1b8fdb");
-		});
-		d.$wrapper.find(".img-pick").on("mouseleave", function () {
-			$(this).css("border-color", "transparent");
-		});
+	const $refresh_button = $(
+		'<button class="btn btn-xs btn-default btn-change-image" style="margin-top:8px;">Atualizar Imagens</button>'
+	);
+	$refresh_button.on("click", () => open_image_picker(frm, true));
+
+	$wrapper.append($picker);
+	$wrapper.append($refresh_button);
+}
+
+function open_image_picker(frm, force_reload = false) {
+	ensure_image_picker_styles();
+
+	if (!frm.doc.item) {
+		render_inline_image_picker(frm, []);
+		return;
+	}
+
+	if (!force_reload && frm.__item_images_cache && frm.__item_images_cache.item === frm.doc.item) {
+		render_inline_image_picker(frm, frm.__item_images_cache.images || []);
+		return;
+	}
+
+	fetch_item_images(frm).then((images) => {
+		frm.__item_images_cache = { item: frm.doc.item, images };
+		render_inline_image_picker(frm, images);
 	});
 }
 
@@ -171,23 +282,20 @@ frappe.ui.form.on("Calculadora Orcamento", {
 			});
 		}
 
-		// "Selecionar Imagem" button next to the read-only image field
-		if (frm.doc.item && frm.fields_dict.imagem_produto) {
-			frm.fields_dict.imagem_produto.$wrapper.find(".btn-change-image").remove();
-			let $btn = $(
-				'<button class="btn btn-xs btn-default btn-change-image" style="margin-top:5px;">Selecionar Imagem</button>'
-			);
-			$btn.on("click", () => open_image_picker(frm));
-			frm.fields_dict.imagem_produto.$wrapper.append($btn);
-		}
+		open_image_picker(frm);
 	},
 
 	item(frm) {
-		if (!frm.doc.item) {
-			frm.set_value("imagem_produto", "");
-			return;
+		frm.__item_images_cache = null;
+		frm.set_value("imagem_produto", "");
+		open_image_picker(frm, true);
+	},
+
+	imagem_produto(frm) {
+		const cached = frm.__item_images_cache;
+		if (cached && cached.item === frm.doc.item) {
+			render_inline_image_picker(frm, cached.images || []);
 		}
-		open_image_picker(frm);
 	},
 
 	tabela_comissao(frm) {
