@@ -39,14 +39,17 @@ function ensure_image_picker_styles() {
 			display: none !important;
 		}
 
-		[data-fieldname="imagem_produto"] .qi-image-picker {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 8px;
+		.qi-image-picker-host {
 			margin-top: 8px;
 		}
 
-		[data-fieldname="imagem_produto"] .qi-image-option {
+		.qi-image-picker-host .qi-image-picker {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+		}
+
+		.qi-image-picker-host .qi-image-option {
 			border: 2px solid transparent;
 			border-radius: 6px;
 			padding: 3px;
@@ -55,26 +58,26 @@ function ensure_image_picker_styles() {
 			line-height: 0;
 		}
 
-		[data-fieldname="imagem_produto"] .qi-image-option:hover {
+		.qi-image-picker-host .qi-image-option:hover {
 			border-color: #1b8fdb;
 		}
 
-		[data-fieldname="imagem_produto"] .qi-image-option.is-selected {
+		.qi-image-picker-host .qi-image-option.is-selected {
 			border-color: #223985;
 			box-shadow: 0 0 0 1px #223985 inset;
 		}
 
-		[data-fieldname="imagem_produto"] .qi-image-option img {
+		.qi-image-picker-host .qi-image-option img {
 			width: 96px;
 			height: 96px;
 			object-fit: contain;
 			display: block;
 		}
 
-		[data-fieldname="imagem_produto"] .qi-image-picker-help {
+		.qi-image-picker-host .qi-image-picker-help {
 			font-size: 12px;
 			color: #667085;
-			margin-top: 8px;
+			margin: 0;
 		}
 	`;
 
@@ -85,11 +88,13 @@ function fetch_item_images(frm) {
 	if (!frm.doc.item) return Promise.resolve([]);
 
 	return Promise.all([
-		new Promise((resolve) => {
-			frappe.db.get_value("Item", frm.doc.item, "image", (r) => {
-				resolve(r && r.image ? r.image : null);
-			});
-		}),
+		frappe.db
+			.get_value("Item", frm.doc.item, "image")
+			.then((r) => {
+				if (r && r.message && r.message.image) return r.message.image;
+				return r && r.image ? r.image : null;
+			})
+			.catch(() => null),
 		new Promise((resolve) => {
 			frappe.call({
 				method: "frappe.client.get_list",
@@ -104,6 +109,7 @@ function fetch_item_images(frm) {
 					limit_page_length: 200,
 				},
 				callback: (r) => resolve(r.message || []),
+				error: () => resolve([]),
 			});
 		}),
 	]).then(([main_image, files]) => {
@@ -117,22 +123,42 @@ function fetch_item_images(frm) {
 	});
 }
 
-function render_inline_image_picker(frm, images) {
-	const field = frm.fields_dict.imagem_produto;
-	if (!field || !field.$wrapper) return;
+function get_image_picker_host(frm) {
+	const imageField = frm.fields_dict.imagem_produto;
+	const itemField = frm.fields_dict.item;
+	const $imageWrapper = imageField && imageField.$wrapper ? imageField.$wrapper : null;
+	const $itemWrapper = itemField && itemField.$wrapper ? itemField.$wrapper : null;
 
-	const $wrapper = field.$wrapper;
-	$wrapper.find(".qi-image-picker, .qi-image-picker-help, .btn-change-image").remove();
+	if ($imageWrapper && $imageWrapper.length) {
+		$imageWrapper.find("> .qi-image-picker-host").remove();
+	}
+	if ($itemWrapper && $itemWrapper.length) {
+		$itemWrapper.find("> .qi-image-picker-host").remove();
+	}
+
+	const useImageWrapper =
+		$imageWrapper && $imageWrapper.length && $imageWrapper.is(":visible");
+	const $target = useImageWrapper ? $imageWrapper : $itemWrapper;
+	if (!$target || !$target.length) return null;
+
+	const $host = $('<div class="qi-image-picker-host"></div>');
+	$target.append($host);
+	return $host;
+}
+
+function render_inline_image_picker(frm, images) {
+	const $host = get_image_picker_host(frm);
+	if (!$host) return;
 
 	if (!frm.doc.item) {
-		$wrapper.append(
+		$host.append(
 			`<div class="qi-image-picker-help">${__("Selecione um item para ver as imagens disponíveis.")}</div>`
 		);
 		return;
 	}
 
 	if (!images.length) {
-		$wrapper.append(
+		$host.append(
 			`<div class="qi-image-picker-help">${__("Nenhuma imagem encontrada para este item.")}</div>`
 		);
 		return;
@@ -161,8 +187,8 @@ function render_inline_image_picker(frm, images) {
 	);
 	$refresh_button.on("click", () => open_image_picker(frm, true));
 
-	$wrapper.append($picker);
-	$wrapper.append($refresh_button);
+	$host.append($picker);
+	$host.append($refresh_button);
 }
 
 function open_image_picker(frm, force_reload = false) {
