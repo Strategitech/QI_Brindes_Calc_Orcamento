@@ -3,8 +3,8 @@
 {% set company_name = frappe.db.get_single_value("Global Defaults", "default_company") %}
 {% set company_doc = frappe.get_doc("Company", company_name) if company_name else None %}
 {% set product_image = doc.imagem_produto or (item_doc.image if item_doc else None) %}
-{% set product_name = item_doc.item_name if item_doc and item_doc.item_name else (doc.item or "") %}
-{% set descricao = doc.get("descri\u00e7\u00e3o") or "" %}
+{% set product_name = item_doc.item_name if item_doc and item_doc.item_name else "Produto personalizado" %}
+{% set descricao = doc.get("descri\u00e7\u00e3o") or doc.get("descricao") or (item_doc.description if item_doc and item_doc.description else "") %}
 
 {% set gravacao_metodos = [] %}
 {% for row in doc.gravacoes %}
@@ -143,11 +143,21 @@
     min-height: 120px;
   }
 
+  .product-image-box {
+    width: 36mm;
+    height: 30mm;
+    margin: 0 auto 3mm auto;
+    text-align: center;
+    line-height: 30mm;
+  }
+
   .product-image {
-    display: block;
+    display: inline-block;
+    width: auto;
+    height: auto;
     max-width: 36mm;
     max-height: 30mm;
-    margin: 0 auto 3mm auto;
+    vertical-align: middle;
   }
 
   .product-text {
@@ -157,9 +167,21 @@
     line-height: 1.2;
   }
 
-  .product-gravacao {
+  .product-name {
+    display: block;
+    font-weight: 700;
+  }
+
+  .product-description {
     display: block;
     margin-top: 1mm;
+  }
+
+  .product-gravacao {
+    display: block;
+    margin: 0 0 2mm 0;
+    text-align: center;
+    font-size: 9.2pt;
   }
 
   .center {
@@ -191,6 +213,20 @@
   .notes .frete {
     text-transform: uppercase;
   }
+
+  .quote-footer {
+    margin-top: 8mm;
+    padding-top: 2.2mm;
+    border-top: 1px solid #ccc;
+    text-align: center;
+    font-size: 9.4pt;
+    color: #333;
+    line-height: 1.4;
+  }
+
+  .quote-footer strong {
+    font-weight: 700;
+  }
 </style>
 
 <div class="quote-page">
@@ -212,8 +248,6 @@
     <div class="company-strip">
       {% if company_doc %}
         {{ company_doc.name | upper }}
-        {% if company_doc.tax_id %} CNPJ: {{ company_doc.tax_id }}{% endif %}
-        {% if company_doc.custom_inscricao_estadual %} INSCRICAO ESTADUAL: {{ company_doc.custom_inscricao_estadual }}{% endif %}
       {% endif %}
     </div>
 
@@ -238,12 +272,17 @@
       <tr>
         <td class="product-cell">
           {% if product_image %}
-            <img class="product-image" src="{{ product_image }}" alt="">
+            <div class="product-image-box">
+              <img class="product-image" src="{{ product_image }}" alt="{{ product_name }}">
+            </div>
+          {% endif %}
+          {% if gravacao_metodos %}
+            <span class="product-gravacao">personalizada a {{ gravacao_metodos | join(", ") | lower }}</span>
           {% endif %}
           <div class="product-text">
-            {{ (product_name ~ (", " ~ descricao if descricao else "")) | replace("\n", " ") }}
-            {% if gravacao_metodos %}
-              <span class="product-gravacao">personalizada a {{ gravacao_metodos | join(", ") | lower }}</span>
+            <span class="product-name">{{ product_name }}</span>
+            {% if descricao %}
+              <span class="product-description">{{ descricao | replace("\n", " ") }}</span>
             {% endif %}
           </div>
         </td>
@@ -262,5 +301,17 @@
     {% endif %}
     <p>Validade do orcamento 10 dias</p>
     <p>Prazo de entrega 15 dias uteis</p>
+  </div>
+
+  <div class="quote-footer">
+    {% if company_doc %}
+      <div>
+        <strong>{{ company_doc.name }}</strong>
+        {% if company_doc.tax_id %} | CNPJ: {{ company_doc.tax_id }}{% endif %}
+        {% if company_doc.custom_inscricao_estadual %} | IE: {{ company_doc.custom_inscricao_estadual }}{% endif %}
+        {% if company_doc.custom_ccm %} | CCM: {{ company_doc.custom_ccm }}{% endif %}
+      </div>
+    {% endif %}
+    <div><strong>www.qibrindes.com.br</strong> | fone: 11 2476 - 6065 | contato@qibrindes.com.br</div>
   </div>
 </div>
