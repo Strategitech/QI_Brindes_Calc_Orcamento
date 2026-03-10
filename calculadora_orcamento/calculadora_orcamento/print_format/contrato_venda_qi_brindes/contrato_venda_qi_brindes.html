@@ -16,6 +16,17 @@
     "parenttype": "Address"
 }, "parent") if orc_doc and orc_doc.nome else None %}
 {% set customer_addr = frappe.get_doc("Address", customer_address_name) if customer_address_name else None %}
+{% set gravacao_metodos = [] %}
+{% if orc_doc %}
+  {% for row in orc_doc.gravacoes %}
+    {% if row.catalogo_gravacao %}
+      {% set metodo = frappe.db.get_value("Catalogo Gravacao", row.catalogo_gravacao, "metodo_gravacao") %}
+      {% if metodo and metodo not in gravacao_metodos %}
+        {% set _ = gravacao_metodos.append(metodo) %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
 
 {% set delivery_parts = [] %}
 {% if doc.endereco_logradouro %}{% set _ = delivery_parts.append(doc.endereco_logradouro) %}{% endif %}
@@ -30,6 +41,23 @@
 {% set delivery_address = delivery_parts | join(", ") if delivery_parts else None %}
 
 {% set estimated_delivery = frappe.utils.add_days(doc.data_confirmacao, 15) if doc.data_confirmacao else None %}
+{% set contract_lines = orc_doc.produtos if orc_doc and orc_doc.produtos else [] %}
+{% if not contract_lines %}
+  {% set contract_lines = [{
+      "item": doc.item,
+      "descricao": doc.descricao,
+      "quantidade": doc.quantidade,
+      "valor_unitario": doc.valor_unitario,
+      "valor_total": doc.valor_total
+  }] %}
+{% endif %}
+{% set total_pedido = namespace(value=0) %}
+{% for row in contract_lines %}
+  {% set total_pedido.value = total_pedido.value + (row.valor_total or 0) %}
+{% endfor %}
+{% if total_pedido.value == 0 and doc.valor_total %}
+  {% set total_pedido.value = doc.valor_total %}
+{% endif %}
 
 <style>
   @page {
@@ -291,18 +319,30 @@
       </tr>
     </thead>
     <tbody>
+      {% for row in contract_lines %}
+      {% set row_item_name = frappe.db.get_value("Item", row.item, "item_name") if row.item else None %}
+      {% set row_qty = row.quantidade or 0 %}
+      {% set row_total = row.valor_total or 0 %}
+      {% set row_unit = row.valor_unitario or ((row_total / row_qty) if row_qty else 0) %}
+      {% set row_desc_base = row.descricao or "" %}
+      {% if gravacao_metodos and "personalizada a " not in (row_desc_base or "") | lower %}
+        {% set row_desc = row_desc_base ~ ", personalizada a " ~ (gravacao_metodos | join(", ") | lower) %}
+      {% else %}
+        {% set row_desc = row_desc_base %}
+      {% endif %}
       <tr>
-        <td>{{ doc.item }}{% if doc.descricao %}<br><small>{{ doc.descricao }}</small>{% endif %}</td>
-        <td class="center">{{ doc.quantidade | int }}</td>
-        <td class="money">{{ frappe.utils.fmt_money(doc.valor_unitario, currency="BRL") }}</td>
-        <td class="money">{{ frappe.utils.fmt_money(doc.valor_total, currency="BRL") }}</td>
+        <td>{{ row_item_name or row.item or "Produto personalizado" }}{% if row_desc %}<br><small>{{ row_desc }}</small>{% endif %}</td>
+        <td class="center">{{ row_qty | int }}</td>
+        <td class="money">{{ frappe.utils.fmt_money(row_unit, currency="BRL") }}</td>
+        <td class="money">{{ frappe.utils.fmt_money(row_total, currency="BRL") }}</td>
       </tr>
+      {% endfor %}
     </tbody>
   </table>
 
   <ul class="summary">
     <li>Valor do Frete: <span class="value">{% if orc_doc and orc_doc.frete and orc_doc.frete > 0 %}{{ frappe.utils.fmt_money(orc_doc.frete, currency="BRL") }}{% else %}A calcular{% endif %}</span></li>
-    <li>Valor Total Do Pedido: <span class="value">{{ frappe.utils.fmt_money(doc.valor_total, currency="BRL") }}</span></li>
+    <li>Valor Total Do Pedido: <span class="value">{{ frappe.utils.fmt_money(total_pedido.value, currency="BRL") }}</span></li>
     <li>Endereco De Entrega: <span class="value">{{ delivery_address if delivery_address else "[campo editavel]" }}</span></li>
     <li>Data De Confirmacao: <span class="value">{% if doc.data_confirmacao %}{{ frappe.utils.formatdate(doc.data_confirmacao, "dd/MM/yyyy") }}{% else %}[campo editavel]{% endif %}</span></li>
     <li>Data De Entrega: <span class="value">{% if estimated_delivery %}{{ frappe.utils.formatdate(estimated_delivery, "dd/MM/yyyy") }}{% else %}[campo editavel]{% endif %}</span></li>

@@ -2,6 +2,7 @@
  "actions": [],
  "autoname": "format:CONF-{MM}-{YY}-{#####}",
  "creation": "2026-02-17 12:00:00.000000",
+ "default_print_format": "Contrato Venda QI Brindes",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [

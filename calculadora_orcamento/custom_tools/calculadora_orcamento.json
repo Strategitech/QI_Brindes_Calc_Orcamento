@@ -88,7 +88,7 @@
   },
   {
    "fieldname": "descri\u00e7\u00e3o",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "label": "Descri\u00e7\u00e3o",
    "read_only": 1
   },

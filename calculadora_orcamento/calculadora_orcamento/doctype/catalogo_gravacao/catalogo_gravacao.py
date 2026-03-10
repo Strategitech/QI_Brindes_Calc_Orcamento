@@ -22,7 +22,7 @@ def calcular_custo_gravacao(catalogo_name, qty):
 	qty = int(qty or 0)
 
 	if qty <= 0:
-		return {"custo": 0.0, "descricao": "Quantidade zero"}
+		return {"custo": 0.0, "custo_unitario": 0.0, "descricao": "Quantidade zero"}
 
 	for faixa in doc.faixas:
 		in_range = qty >= faixa.qty_min
@@ -34,21 +34,29 @@ def calcular_custo_gravacao(catalogo_name, qty):
 
 			if faixa.tipo == "Minimo":
 				custo = preco
+				custo_unitario = custo / qty if qty else 0.0
 				desc = f"Minimo: R${preco:,.2f}"
 			elif faixa.tipo == "Unitario":
 				custo = qty * preco
+				custo_unitario = preco
 				desc = f"Unitario: {qty} x R${preco:,.2f} = R${custo:,.2f}"
 			elif faixa.tipo == "Milheiro":
 				milheiros = math.ceil(qty / 1000.0)
 				custo = milheiros * preco
+				custo_unitario = custo / qty if qty else 0.0
 				desc = f"Milheiro: {milheiros} x R${preco:,.2f} = R${custo:,.2f}"
 			else:
 				custo = 0.0
+				custo_unitario = 0.0
 				desc = "Tipo desconhecido"
 
-			return {"custo": custo, "descricao": desc}
+			return {"custo": custo, "custo_unitario": custo_unitario, "descricao": desc}
 
-	return {"custo": 0.0, "descricao": "Nenhuma faixa encontrada para esta quantidade"}
+	return {
+		"custo": 0.0,
+		"custo_unitario": 0.0,
+		"descricao": "Nenhuma faixa encontrada para esta quantidade",
+	}
 
 
 @frappe.whitelist()

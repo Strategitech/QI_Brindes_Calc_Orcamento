@@ -4,6 +4,10 @@
 import frappe
 from frappe.model.document import Document
 
+from calculadora_orcamento.calculadora_orcamento.doctype.calculadora_orcamento.calculadora_orcamento import (
+	build_confirmacao_resumo,
+)
+
 
 class ConfirmacaoPedido(Document):
 	def validate(self):
@@ -12,20 +16,14 @@ class ConfirmacaoPedido(Document):
 
 	def populate_from_orcamento(self):
 		orc = frappe.get_doc("Calculadora Orcamento", self.orcamento)
-		item_details = (
-			frappe.db.get_value("Item", orc.item, ["item_name", "description"], as_dict=True)
-			if orc.item
-			else None
-		)
-		item_name = item_details.item_name if item_details and item_details.item_name else None
-		item_description = item_details.description if item_details and item_details.description else ""
+		resumo = build_confirmacao_resumo(orc)
 		self.cliente = orc.nome
 		self.telefone = orc.telefone_whatsapp
-		self.item = item_name or (orc.get("descrição") or orc.get("descricao") or "Produto personalizado")
-		self.descricao = orc.get("descrição") or orc.get("descricao") or item_description or ""
-		self.quantidade = orc.quantidade
-		self.valor_unitario = orc.valor_final_unitario
-		self.valor_total = orc.valor_final_total
+		self.item = resumo.get("item")
+		self.descricao = resumo.get("descricao")
+		self.quantidade = resumo.get("quantidade")
+		self.valor_unitario = resumo.get("valor_unitario")
+		self.valor_total = resumo.get("valor_total")
 
 		# Auto-populate address from Customer
 		from frappe.contacts.doctype.address.address import get_default_address

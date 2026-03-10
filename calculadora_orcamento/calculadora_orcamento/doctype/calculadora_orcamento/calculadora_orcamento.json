@@ -3,6 +3,7 @@
  "allow_rename": 1,
  "autoname": "format:OR\u00c7AMENTO-Cliente:{nome}-Produto:{item}-{DD}-{MM}-{YY}-{#####}",
  "creation": "2025-12-08 17:40:27.722893",
+ "default_print_format": "Orcamento QI Brindes",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -10,6 +11,7 @@
   "nome",
   "telefone_whatsapp",
   "produto_section",
+  "produtos",
   "item",
   "imagem_produto",
   "descri\u00e7\u00e3o",
@@ -96,12 +98,17 @@
    "label": "Produto"
   },
   {
+   "fieldname": "produtos",
+   "fieldtype": "Table",
+   "label": "Produtos",
+   "options": "Orcamento Produto Item"
+  },
+  {
    "fieldname": "item",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Item",
-   "options": "Item",
-   "reqd": 1
+   "options": "Item"
   },
   {
    "fieldname": "imagem_produto",
@@ -111,7 +118,7 @@
   },
   {
    "fieldname": "descri\u00e7\u00e3o",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "label": "Descri\u00e7\u00e3o",
    "read_only": 1,
    "fetch_from": "item.description",
@@ -122,8 +129,7 @@
    "fieldname": "quantidade",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Quantidade",
-   "reqd": 1
+   "label": "Quantidade"
   },
   {
    "default": "0",

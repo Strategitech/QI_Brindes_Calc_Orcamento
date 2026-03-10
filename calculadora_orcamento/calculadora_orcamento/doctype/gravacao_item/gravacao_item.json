@@ -36,13 +36,14 @@
   },
   {
    "default": "0",
+   "description": "Com Catálogo Gravação selecionado, este valor é calculado automaticamente.",
    "fieldname": "custo_unitario",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Custo Unit\u00e1rio",
    "non_negative": 1,
    "precision": "2",
-   "depends_on": "eval:!doc.catalogo_gravacao"
+   "read_only_depends_on": "eval:!!doc.catalogo_gravacao"
   },
   {
    "fieldname": "column_break_grav",
